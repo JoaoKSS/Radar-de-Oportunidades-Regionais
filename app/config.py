@@ -58,10 +58,12 @@ BCB_REST_FALLBACK = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados
 
 # Códigos oficiais de séries do SGS
 SERIES_BCB = {
-    "ipca": 433,       # IPCA — variação % mensal
-    "ipca_12m": 13522, # IPCA — acumulado 12 meses (%)
-    "selic": 432,      # Meta Selic definida pelo Copom (% a.a.)
-    "cambio": 1,       # Câmbio — livre — US$ (compra) — diário
+    "ipca": 433,              # IPCA — variação % mensal
+    "ipca_12m": 13522,        # IPCA — acumulado 12 meses (%)
+    "selic": 432,             # Meta Selic definida pelo Copom (% a.a.)
+    "cambio": 1,              # Câmbio — livre — US$ (compra) — diário
+    "inadimplencia_pj": 21086,# Inadimplência da carteira de crédito - PJ (%)
+    "juros_giro": 20749,      # Taxa média de juros - PJ - Capital de giro (% a.a.)
 }
 
 # ---------------------------------------------------------------

@@ -16,8 +16,8 @@ def _garanta_venv() -> None:
     try:
         import uvicorn  # noqa: F401
     except ModuleNotFoundError:
-        venv_python = Path(__file__).resolve().parent / ".venv" / "bin" / "python"
-        if venv_python.exists():
+        venv_python = (Path(__file__).resolve().parent / ".venv" / "bin" / "python").resolve()
+        if venv_python.exists() and Path(sys.executable).resolve() != venv_python:
             os.execv(str(venv_python), [str(venv_python), __file__, *sys.argv[1:]])
         print(
             "Dependências ausentes. Monte o ambiente uma vez:\n"

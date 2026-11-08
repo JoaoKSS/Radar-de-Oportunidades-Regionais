@@ -243,6 +243,68 @@
     }));
   }
 
+  /* 5. Crédito Empresarial (Juros de Capital de Giro x Inadimplência PJ - Duplo Eixo) */
+  if (R && R.credito && R.credito.meses && R.credito.meses.length) {
+    var cMeses = R.credito.meses;
+    var cJuros = R.credito.juros_giro;
+    var cInad = R.credito.inadimplencia;
+
+    render('chart-credito-pj', grade({
+      legend: {
+        top: 2,
+        right: 0,
+        icon: 'circle',
+        itemWidth: 8,
+        itemGap: 16,
+        textStyle: { color: TINTA_FRACA, fontSize: 11.5, fontWeight: 500 }
+      },
+      xAxis: { type: 'category', data: cMeses, boundaryGap: false,
+               axisLine: { lineStyle: { color: BORDA } },
+               axisLabel: { color: TINTA_FRACA, interval: 3, fontSize: 11 }, axisTick: { show: false } },
+      yAxis: [
+        {
+          type: 'value', name: 'Juros Giro (% a.a.)', position: 'left',
+          nameTextStyle: { color: TINTA_FRACA, fontSize: 11, padding: [0, 0, 8, 0] },
+          axisLabel: { color: TINTA_FRACA, formatter: '{value}%', fontSize: 10.5 },
+          splitLine: { lineStyle: { color: '#f1f5f9' } }
+        },
+        {
+          type: 'value', name: 'Inadimplência PJ', position: 'right',
+          nameTextStyle: { color: TINTA_FRACA, fontSize: 11, padding: [0, 0, 8, 0] },
+          axisLabel: { color: TINTA_FRACA, formatter: '{value}%', fontSize: 10.5 },
+          splitLine: { show: false }
+        }
+      ],
+      tooltip: {
+        trigger: 'axis',
+        formatter: function (ps) {
+          var t = '<strong>' + ps[0].axisValue + '</strong><br/>';
+          ps.forEach(function (p) {
+            t += p.marker + ' ' + p.seriesName + ': <strong>' +
+                 Number(p.value).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%</strong><br/>';
+          });
+          return t;
+        }
+      },
+      series: [
+        {
+          name: 'Juros Capital de Giro', type: 'line', yAxisIndex: 0,
+          data: cJuros, smooth: true,
+          lineStyle: { width: 2.5, color: '#0284c7' },
+          itemStyle: { color: '#0284c7' },
+          symbol: 'circle', symbolSize: 5
+        },
+        {
+          name: 'Inadimplência PJ', type: 'line', yAxisIndex: 1,
+          data: cInad, smooth: true,
+          lineStyle: { width: 2.5, color: '#dc2626', type: 'dashed' },
+          itemStyle: { color: '#dc2626' },
+          symbol: 'circle', symbolSize: 5
+        }
+      ]
+    }, { top: 58, bottom: 12 }));
+  }
+
   /* ---------- mapa de localização (IBGE Malhas) ---------- */
   if (R && R.geo && document.getElementById('chart-mapa')) {
     fetch('/api/malha/brasil')

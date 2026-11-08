@@ -268,4 +268,34 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Custo de capital e taxas de crédito elevados. Desestimula alavancagem excessiva; favorece projetos com baixo investimento inicial."
             })
 
+    # Inadimplência e Crédito Empresarial (SOAP BCB)
+    inadimplencia = contexto.get("inadimplencia_pj")
+    if inadimplencia and inadimplencia.get("pontos"):
+        taxa_inad = inadimplencia["pontos"][-1]["valor"]
+        if taxa_inad >= 3.5:
+            insights.append({
+                "tag": "risco",
+                "categoria": "Crédito / BCB",
+                "metrica": f"Inadimplência PJ: {taxa_inad:.2f}%",
+                "texto": "Inadimplência de empresas em nível elevado no país. Negócios B2B devem adotar maior rigor em vendas a prazo e análise de clientes."
+            })
+        else:
+            insights.append({
+                "tag": "positiva",
+                "categoria": "Crédito / BCB",
+                "metrica": f"Inadimplência PJ: {taxa_inad:.2f}%",
+                "texto": "Índice de solvência corporativa saudável no país, favorecendo operações de crédito e fornecimento a prazo."
+            })
+
+    juros_giro = contexto.get("juros_giro")
+    if juros_giro and juros_giro.get("pontos"):
+        taxa_giro = juros_giro["pontos"][-1]["valor"]
+        if taxa_giro >= 25.0:
+            insights.append({
+                "tag": "cuidado",
+                "categoria": "Crédito / BCB",
+                "metrica": f"Capital de Giro: {taxa_giro:.1f}% a.a.",
+                "texto": "Financiamento de curto prazo custoso para empresas. Fundamental projetar fluxo de caixa positivo sem depender de crédito rotativo."
+            })
+
     return insights

@@ -128,6 +128,12 @@
     <div id="chart-ipca" class="grafico"></div>
     <p class="nota">Variação percentual mês a mês. Fonte: <span class="proto">{{ dados.contexto.ipca.fonte }}</span>.</p>
   </article>
+
+  <article class="card painel-chart">
+    <h2>Ambiente de Crédito Empresarial (Juros de Giro × Inadimplência PJ)</h2>
+    <div id="chart-credito-pj" class="grafico"></div>
+    <p class="nota">Cruzamento macroeconômico de custo do dinheiro (% a.a.) e índice de solvência das empresas (% inadimplente). Fonte: <span class="proto">{{ dados.contexto.juros_giro.fonte }}</span>.</p>
+  </article>
 </section>
 
 {% if contexto %}

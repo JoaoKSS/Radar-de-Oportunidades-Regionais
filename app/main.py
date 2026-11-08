@@ -133,12 +133,14 @@ def _grafia_data(iso: str) -> str:
     return f"{iso[8:10]}/{iso[5:7]}/{iso[:4]}" if len(iso) == 10 else ""
 
 def _contexto_resumo(contexto: dict[str, Any]) -> list[dict[str, str]]:
-    """Três mini-cards nacionais alimentados pelo SOAP do BCB."""
+    """Mini-cards nacionais alimentados pelo SOAP do BCB."""
     saida: list[dict[str, str]] = []
     rotulos = {
-        "ipca_12m": ("IPCA 12 meses · BCB", "pct2"),
-        "selic":    ("Meta Selic · BCB", "pct2"),
-        "cambio":   ("Câmbio US$ · BCB", "rs"),
+        "ipca_12m":         ("IPCA 12 meses · BCB", "pct2"),
+        "selic":            ("Meta Selic · BCB", "pct2"),
+        "cambio":           ("Câmbio US$ · BCB", "rs"),
+        "inadimplencia_pj": ("Inadimplência PJ · BCB", "pct2"),
+        "juros_giro":       ("Juros Cap. Giro · BCB", "pct2"),
     }
     for chave, (rotulo, _tipo) in rotulos.items():
         pts = contexto.get(chave, {}).get("pontos") or []
@@ -154,8 +156,6 @@ def _contexto_resumo(contexto: dict[str, Any]) -> list[dict[str, str]]:
             "valor": valor,
             "data": _grafia_data(ultimo.get("data", "")),
         })
-        if len(saida) == 3:
-            break
     return saida
 
 def _payload_graficos(dados: dict[str, Any]) -> dict[str, Any]:
@@ -165,6 +165,8 @@ def _payload_graficos(dados: dict[str, Any]) -> dict[str, Any]:
     pib_real: dict[int, float] = dict(dados["pib_serie"]["real"])
     ipca = dados["contexto"]["ipca"]["pontos"][-24:]
     ipca12 = dados["contexto"]["ipca_12m"]["pontos"]
+    cred_giro = dados["contexto"].get("juros_giro", {}).get("pontos", [])[-24:]
+    inad_pj = dados["contexto"].get("inadimplencia_pj", {}).get("pontos", [])[-24:]
 
     def rotulo(iso: str) -> str:
         return iso[5:7] + "/" + iso[2:4]  # "07/24"
@@ -187,6 +189,11 @@ def _payload_graficos(dados: dict[str, Any]) -> dict[str, Any]:
         "ipca12": {
             "meses": [rotulo(p["data"]) for p in ipca12],
             "valores": [p["valor"] for p in ipca12],
+        },
+        "credito": {
+            "meses": [rotulo(p["data"]) for p in cred_giro],
+            "juros_giro": [p["valor"] for p in cred_giro],
+            "inadimplencia": [p["valor"] for p in inad_pj],
         },
         "vab": dados.get("vab_setorial"),
         "tem_pib_real": len(pib_real) >= 2,
