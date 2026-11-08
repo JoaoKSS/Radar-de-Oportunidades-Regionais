@@ -49,7 +49,11 @@ _client: httpx.AsyncClient | None = None
 def http() -> httpx.AsyncClient:
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(timeout=30.0, headers={"User-Agent": "radar-oportunidades/1.0"})
+        _client = httpx.AsyncClient(
+            timeout=30.0,
+            limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
+            headers={"User-Agent": "radar-oportunidades/1.0"},
+        )
     return _client
 
 def _normalizar(texto: str) -> str:

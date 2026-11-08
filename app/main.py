@@ -5,12 +5,15 @@ SOAP  (BCB)   → IPCA, Selic, câmbio (FachadaWSSGS via zeep).
 """
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -19,11 +22,45 @@ from app.analysis.painel import dados_comparador, dados_municipio
 from app.services import bcb, ibge, monitor
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+_log = logging.getLogger("radar.main")
+
+
+async def _aquecer_cache():
+    """Pré-aquecimento assíncrono em segundo plano dos dados gerais e cidades em destaque."""
+    await asyncio.sleep(0.5)  # Breve pausa para o uvicorn subir 100%
+    try:
+        _log.info("Pré-aquecendo catálogo de municípios e contexto financeiro...")
+        await asyncio.gather(
+            ibge.lista_municipios(),
+            bcb.contexto_financeiro(anos=26),
+            return_exceptions=True,
+        )
+        _log.info("Aquecendo cidades em destaque da página inicial...")
+        for id_mun, nome, uf in ATALHOS:
+            try:
+                await dados_municipio(id_mun)
+                _log.info(f"✓ Cache pronto: {nome} ({uf})")
+            except Exception as erro:
+                _log.warning(f"Falha ao pré-aquecer {nome}: {erro}")
+        _log.info("🚀 Pré-aquecimento concluído: todas as cidades em destaque já estão em memória.")
+    except Exception as erro:
+        _log.warning(f"Erro no pré-aquecimento geral: {erro}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Dispara a tarefa em background sem segurar a subida do servidor
+    tarefa = asyncio.create_task(_aquecer_cache())
+    yield
+    tarefa.cancel()
+
 
 app = FastAPI(
     title="Radar de Oportunidades Regionais",
     docs_url=None, redoc_url=None, openapi_url=None,
+    lifespan=lifespan,
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 _AQUI = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=_AQUI / "ui" / "static"), name="static")
 templates = Jinja2Templates(directory=_AQUI / "ui" / "templates")
