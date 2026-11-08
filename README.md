@@ -1,5 +1,13 @@
 # Radar de Oportunidades Regionais
 
+![Python](https://img.shields.io/badge/Python_3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![SOAP](https://img.shields.io/badge/SOAP_XML-005571?style=for-the-badge)
+![REST API](https://img.shields.io/badge/REST_API-02569B?style=for-the-badge)
+![Apache ECharts](https://img.shields.io/badge/Apache_ECharts-AA344D?style=for-the-badge&logo=apacheecharts&logoColor=white)
+![Banco Central do Brasil](https://img.shields.io/badge/BACEN-SGS-1F3D58?style=for-the-badge)
+![IBGE](https://img.shields.io/badge/IBGE-SIDRA-002F6C?style=for-the-badge)
+
 Sistema de investigação econômica por município: o usuário escolhe uma cidade e
 recebe indicadores, evolução histórica, comparativo entre municípios e
 **pontos de atenção para novos negócios**.
