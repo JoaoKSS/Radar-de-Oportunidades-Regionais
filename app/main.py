@@ -30,10 +30,11 @@ templates = Jinja2Templates(directory=_AQUI / "ui" / "templates")
 
 # Municípios de atalho da página inicial
 ATALHOS = [
+    (3143302, "Montes Claros", "MG"),
     (3550308, "São Paulo", "SP"), (3304557, "Rio de Janeiro", "RJ"),
     (3106200, "Belo Horizonte", "MG"), (4106902, "Curitiba", "PR"),
     (2611606, "Recife", "PE"), (2304400, "Fortaleza", "CE"),
-    (1302603, "Manaus", "AM"), (2408102, "Natal", "RN"),
+    (1302603, "Manaus", "AM"),
 ]
 
 # ------------------------------------------------------------------
