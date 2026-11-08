@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block titulo %}{{ dados.info.nome }} ({{ dados.info.uf }}) | Radar de Oportunidades{% endblock %}
+
+{% set ind = dados.indicators %}
+
+{% block corpo %}
+<section class="cabm">
+  <h1>{{ dados.info.nome }}</h1>
+  <span class="uf">{{ dados.info.uf }}</span>
+</section>
+
+<section class="cards">
+  <article class="card card-num">
+    <div class="rotulo">População · IBGE</div>
+    <div class="valor">{{ ind.populacao.valor | num }}</div>
+    <p class="nota">
+      <span class="selo {{ ind.populacao.tag }}"></span>
+      estimativa: {{ ind.populacao.ano }}
+      {% if ind.populacao.cresc_5a is not none %}· {{ ind.populacao.cresc_5a | pct(false) }} em 5 anos{% endif %}
+    </p>
+  </article>
+
+  <article class="card card-num">
+    <div class="rotulo">PIB municipal · IBGE</div>
+    <div class="valor">{{ ind.pib.valor | pib }}</div>
+    <p class="nota">
+      <span class="selo {{ ind.pib.tag }}"></span>
+      ref.: {{ ind.pib.ano }}
+      {% if ind.pib.cresc_real_5a is not none %}· real {{ ind.pib.cresc_real_5a | pct }} a.a.{% endif %}
+    </p>
+  </article>
+
+  <article class="card card-num">
+    <div class="rotulo">PIB per capita · IBGE</div>
+    <div class="valor">{% if ind.pib_pc.valor %}{{ ind.pib_pc.valor | pib }}{% else %}—{% endif %}</div>
+    <p class="nota">base: ano {{ ind.pib_pc.ano or "—" }}</p>
+  </article>
+
+  <article class="card card-num">
+    <div class="rotulo">Empresas ativas · IBGE</div>
+    <div class="valor">{{ ind.empresas.n | num }}</div>
+    <p class="nota">
+      CEMPRE {{ ind.empresas.ano or "—" }} ·
+      {{ ind.empresas.empregos | num }} empregos
+    </p>
+  </article>
+
+  <article class="card card-num">
+    <div class="rotulo">Densidade emp. · IBGE</div>
+    <div class="valor">{% if ind.empresas.por_mil_hab %}{{ ind.empresas.por_mil_hab | num(1) }}{% else %}—{% endif %}</div>
+    <p class="nota">
+      {% if ind.empresas.empregos_por_empresa %}{{ ind.empresas.empregos_por_empresa | num(1) }} empregados/empresa{% endif %}
+    </p>
+  </article>
+
+  <article class="card card-num">
+    <div class="rotulo">Renda média · IBGE</div>
+    <div class="valor">
+      {% if ind.empresas.salario_medio %}R$ {{ ind.empresas.salario_medio | num(0) }}{% else %}—{% endif %}
+    </div>
+    <p class="nota">
+      {% if ind.empresas.salario_medio %}médio/mês · CEMPRE {{ ind.empresas.ano }}{% else %}dados salariais não informados{% endif %}
+    </p>
+  </article>
+</section>
+
+<section class="linha2">
+  <article class="card painel-chart painel-mapa-wrap">
+    <div class="mapa-topo-cab">
+      <h2>Localização Geográfica (IBGE)</h2>
+      <button type="button" class="btn-mapa-centralizar" id="btn-centralizar-mapa" title="Restaurar visão original do estado" aria-label="Restaurar visão original do mapa">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+      </button>
+    </div>
+    <div id="chart-mapa" class="grafico mapa"></div>
+    <p class="nota">Municípios do estado dimensionados pelo PIB de 2023. Ponto em destaque indica a cidade atual.</p>
+  </article>
+  <article class="card">
+    <h2>Dados Territoriais e Econômicos</h2>
+    <ul class="lista-local">
+      <li><span>Município</span><strong>{{ dados.info.nome }} ({{ dados.info.uf }})</strong></li>
+      <li><span>Estado</span><strong>{{ dados.info.uf_nome }}</strong></li>
+      <li><span>Região</span><strong>{{ dados.info.regiao }}</strong></li>
+      <li><span>Área territorial</span><strong>{% if dados.territorio and dados.territorio.area_km2 %}{{ dados.territorio.area_km2 | num(1) }} km²{% else %}N/D{% endif %}</strong></li>
+      <li><span>PIB no estado</span><strong>{% if ind.rank.posicao %}{{ ind.rank.posicao }}º de {{ ind.rank.de }} municípios{% else %}N/D{% endif %}</strong></li>
+      <li><span>Participação no PIB estadual</span><strong>{% if dados.participacao_pib and dados.participacao_pib.part_uf is not none %}{{ dados.participacao_pib.part_uf | num(2) }}% da UF{% else %}N/D{% endif %}</strong></li>
+      <li><span>Participação no PIB nacional</span><strong>{% if dados.participacao_pib and dados.participacao_pib.part_br is not none %}{{ dados.participacao_pib.part_br | num(2) }}% do Brasil{% else %}N/D{% endif %}</strong></li>
+      <li><span>Centro aprox.</span><strong>{% if dados.geo %}{{ "%.2f"|format(dados.geo.lat) }}, {{ "%.2f"|format(dados.geo.lon) }}{% else %}N/D{% endif %}</strong></li>
+    </ul>
+    <p class="nota">Georreferenciamento pela malha e pesos econômicos oficiais (Tabela 5938, IBGE).</p>
+  </article>
+</section>
+
+<section class="linha2">
+  <article class="card painel-chart">
+    <h2>Evolução Populacional</h2>
+    <div id="chart-pop" class="grafico"></div>
+    <p class="nota">Série histórica intercensitária oficial do IBGE / SIDRA.</p>
+  </article>
+
+  <article class="card painel-chart">
+    <h2>Crescimento do PIB (Nominal vs Real)</h2>
+    <div id="chart-pib" class="grafico"></div>
+    <p class="nota">PIB deflacionado pelo IPCA do Banco Central a preços constantes.</p>
+  </article>
+</section>
+
+<section class="linha2">
+  <article class="card painel-chart">
+    <h2>Composição Econômica (VAB por Setor)</h2>
+    <div id="chart-setores" class="grafico"></div>
+    <p class="nota">Distribuição setorial do Valor Adicionado Bruto. Fonte: SIDRA/IBGE.</p>
+  </article>
+
+  <article class="card painel-chart">
+    <h2>IPCA Acumulado em 12 Meses</h2>
+    <div id="chart-ipca12" class="grafico"></div>
+    <p class="nota">Acumulado anual comparado à meta de 3,0% do Banco Central. Fonte: <span class="proto">{{ dados.contexto.ipca_12m.fonte }}</span>.</p>
+  </article>
+</section>
+
+<section class="linha1">
+  <article class="card painel-chart">
+    <h2>Variação Mensal do IPCA</h2>
+    <div id="chart-ipca" class="grafico"></div>
+    <p class="nota">Variação percentual mês a mês. Fonte: <span class="proto">{{ dados.contexto.ipca.fonte }}</span>.</p>
+  </article>
+</section>
+
+{% if contexto %}
+<section class="mini-contexto">
+  {% for c in contexto %}
+  <div class="card mini">
+    <div class="rotulo">{{ c.rotulo }}</div>
+    <div class="valor">{{ c.valor }}</div>
+    <div class="data">{{ c.data }}</div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="secao secao-diagnostico">
+  <div class="diagnostico-cab">
+    <h2>Diagnóstico Estratégico de Mercado</h2>
+    <span class="diagnostico-sub">Sinais cruzados de demografia, deflação e concorrência</span>
+  </div>
+
+  <div class="grade-diagnostico">
+    {% for i in dados.insights %}
+    <div class="card-diagnostico {{ i.tag }}">
+      <div class="diag-header">
+        <span class="diag-categoria">{{ i.categoria }}</span>
+        <span class="diag-tag {{ i.tag }}">
+          {{ {"positiva": "Oportunidade", "cuidado": "Atenção", "risco": "Risco Crítico"}[i.tag] }}
+        </span>
+      </div>
+      <div class="diag-metrica">{{ i.metrica }}</div>
+      <p class="diag-texto">{{ i.texto }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="diagnostico-rodape">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span>Metodologia: Sinais apurados pelo cruzamento das séries do SIDRA/IBGE deflacionadas via FachadaWSSGS/BCB e base censitária CEMPRE.</span>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="radar-data" type="application/json">{{ payload | safe }}</script>
+<script>
+  window.__RADAR__ = JSON.parse(document.getElementById('radar-data').textContent);
+</script>
+{% endblock %}

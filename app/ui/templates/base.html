@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Radar de Oportunidades Regionais{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/site.css?v=38">
+  <link rel="expect" href="#conteudo-principal" blocking="render">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23edf7f4'/><rect width='30' height='30' x='1' y='1' rx='7' fill='none' stroke='%23b6ded4' stroke-width='1'/><circle cx='16' cy='16' r='9' fill='none' stroke='%230d5f4c' stroke-width='2.2'/><line x1='16' y1='16' x2='23' y2='11' stroke='%230d5f4c' stroke-width='2.2' stroke-linecap='round'/><circle cx='16' cy='16' r='2.4' fill='%230d5f4c'/></svg>">
+</head>
+
+<body>
+  <button class="status status-flutuante" id="status-api" type="button" aria-haspopup="dialog"
+    title="Histórico de requisições REST / SOAP — clique para inspecionar"
+    aria-label="Inspecionar requisições de código REST e SOAP">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="16 18 22 12 16 6"></polyline>
+      <polyline points="8 6 2 12 8 18"></polyline>
+      <line x1="14" y1="4" x2="10" y2="20"></line>
+    </svg>
+  </button>
+
+  <header class="topo">
+    <div class="topo-corpo">
+      <a class="marca" href="/">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+          <line x1="12" y1="12" x2="19" y2="7" stroke="currentColor" stroke-width="2" />
+          <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+        </svg>
+        <span>Radar de Oportunidades <strong>Regionais</strong></span>
+      </a>
+
+      <!-- Menu -->
+      <nav class="menu-desktop">
+        <a href="/" class="{% if request.url.path == '/' or request.url.path.startswith('/municipio') %}ativo{% endif %}">Início</a>
+        <a href="/comparar" class="{% if request.url.path.startswith('/comparar') %}ativo{% endif %}">Comparar</a>
+      </nav>
+
+      <div class="menu-hamburguer-container">
+        <button id="menu-btn" class="menu-btn-hamburguer" type="button" aria-expanded="false"
+          aria-controls="menu-dropdown" aria-label="Abrir menu de navegação">
+          <span class="hamb-linha"></span>
+          <span class="hamb-linha"></span>
+          <span class="hamb-linha"></span>
+        </button>
+        <nav id="menu-dropdown" class="menu-dropdown" aria-labelledby="menu-btn">
+          <a href="/" class="menu-item {% if request.url.path == '/' or request.url.path.startswith('/municipio') %}ativo{% endif %}">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Início</span>
+          </a>
+          <a href="/comparar" class="menu-item {% if request.url.path.startswith('/comparar') %}ativo{% endif %}">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="18" rx="2"></rect>
+              <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg>
+            <span>Comparar</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteudo" id="conteudo-principal">
+    {% block corpo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">
+    <div class="rodape-corpo">
+      <div class="rodape-grid">
+        <!-- Coluna 1: Branding -->
+        <div class="rodape-col rodape-brand">
+          <a class="marca-rodape" href="/">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+              <line x1="12" y1="12" x2="19" y2="7" stroke="currentColor" stroke-width="2" />
+              <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+            </svg>
+            <span>Radar de Oportunidades <strong>Regionais</strong></span>
+          </a>
+          <p class="rodape-tagline">
+            Plataforma analítica para tomada de decisões e expansão comercial baseada em dados públicos e indicadores econômicos oficiais.
+          </p>
+        </div>
+
+        <!-- Coluna 2: Navegação -->
+        <div class="rodape-col">
+          <h4 class="rodape-titulo">Navegação</h4>
+          <ul class="rodape-links">
+            <li><a href="/">Início / Pesquisa</a></li>
+            <li><a href="/comparar">Comparador de Municípios</a></li>
+            <li><a href="/#busca-rapida">Cidades Estratégicas</a></li>
+          </ul>
+        </div>
+
+        <!-- Coluna 3: Integrações Técnicas -->
+        <div class="rodape-col">
+          <h4 class="rodape-titulo">Integrações de Dados</h4>
+          <ul class="rodape-links">
+            <li>
+              <span class="proto-mini rest">REST</span>
+              <span>IBGE (SIDRA, Malhas e Metadados)</span>
+            </li>
+            <li>
+              <span class="proto-mini soap">SOAP</span>
+              <span>Banco Central (FachadaWSSGS)</span>
+            </li>
+            <li>
+              <button type="button" class="link-inspecionar" onclick="document.getElementById('status-api')?.click();">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="16 18 22 12 16 6"></polyline>
+                  <polyline points="8 6 2 12 8 18"></polyline>
+                  <line x1="14" y1="4" x2="10" y2="20"></line>
+                </svg>
+                <span>Inspecionar chamadas ativas</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Coluna 4: Governança e Metodologia -->
+        <div class="rodape-col">
+          <h4 class="rodape-titulo">Metodologia</h4>
+          <p class="rodape-texto-metodologia">
+            PIB municipal deflacionado pelo IPCA histórico a preços constantes. Renda formal e mercado de trabalho apurados com base no Cadastro Central de Empresas (CEMPRE).
+          </p>
+          <span class="aviso-rodape-nota">
+            Instrumento analítico de apoio. Não substitui due diligence de mercado.
+          </span>
+        </div>
+      </div>
+
+      <!-- Barra Inferior (Sub-footer) -->
+      <div class="rodape-sub">
+        <div class="rodape-copy">
+          &copy; 2026 Radar de Oportunidades Regionais &middot; Dados abertos do Brasil
+        </div>
+        <a href="#conteudo-principal" class="rodape-voltar-topo" title="Voltar ao início da página">
+          <span>Voltar ao topo</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="monitor" class="monitor" hidden>
+    <div class="monitor-sombra" data-fechar></div>
+    <aside class="monitor-janela" role="dialog" aria-modal="true" aria-label="Inspecionar requisições REST e SOAP">
+      <header class="monitor-cab">
+        <h2>Inspecionar integrações</h2>
+        <div class="monitor-filtros">
+          <button type="button" data-filtro="all" class="ativo">Tudo</button>
+          <button type="button" data-filtro="REST">REST</button>
+          <button type="button" data-filtro="SOAP">SOAP</button>
+          <button type="button" id="monitor-atualizar" title="Recarregar agora">↻</button>
+        </div>
+        <button type="button" class="monitor-fechar" data-fechar aria-label="Fechar">&times;</button>
+      </header>
+      <div class="monitor-lista" id="monitor-lista"></div>
+    </aside>
+  </div>
+
+  <script>
+    (async () => {
+      const selo = document.getElementById('status-api');
+      if (!selo) return;
+      const painel = document.getElementById('monitor');
+      const lista = document.getElementById('monitor-lista');
+      let filtro = 'all';
+
+      function fechar() {
+        painel.classList.remove('aberto');
+        document.body.style.overflow = '';
+        setTimeout(function () { painel.hidden = true; }, 240);
+      }
+      function abrir() {
+        painel.hidden = false;
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(function () { painel.classList.add('aberto'); });
+        atualizar();
+      }
+
+      function linha(classe, texto) {
+        const s = document.createElement('span');
+        s.className = classe;
+        s.textContent = texto;
+        return s;
+      }
+
+      function blocos(corpo, rotulo, conteudo) {
+        const lbl = document.createElement('span');
+        lbl.className = 'lbl'; lbl.textContent = rotulo;
+        const pre = document.createElement('pre');
+        pre.textContent = conteudo || '—';
+        corpo.append(lbl, pre);
+      }
+
+      function evento(ev) {
+        const det = document.createElement('details');
+        det.className = 'evento';
+        const sum = document.createElement('summary');
+        sum.append(linha('ev-proto ' + (ev.protocolo === 'SOAP' ? 'soap' : 'rest'), ev.protocolo));
+        const op = document.createElement('span');
+        op.className = 'ev-op'; op.textContent = ev.operacao; op.title = ev.operacao;
+        sum.append(op);
+        const bom = /^2\d\d/.test(ev.status);
+        sum.append(linha('ev-status ' + (bom ? 'ok' : (/Fault|erro|falha|ileg/i.test(ev.status) ? 'falha' : 'neutra')), ev.status));
+        if (ev.duracao_ms != null) sum.append(linha('ev-dur', Math.round(ev.duracao_ms) + ' ms'));
+        sum.append(linha('ev-t', ev.t));
+        const corpo = document.createElement('div');
+        blocos(corpo, 'Enviado', ev.enviado);
+        blocos(corpo, 'Recebido', ev.recebido);
+        det.append(sum, corpo);
+        return det;
+      }
+
+      async function atualizar() {
+        lista.textContent = 'carregando…';
+        try {
+          const r = await fetch('/api/monitor');
+          const eventos = (await r.json()).eventos || [];
+          lista.innerHTML = '';
+          const visiveis = eventos.filter(function (ev) {
+            return filtro === 'all' || ev.protocolo === filtro;
+          });
+          if (!visiveis.length) {
+            const v = document.createElement('p');
+            v.className = 'ev-vazio';
+            v.textContent = 'Nenhuma requisição registrada nesta execução — abra um município ou faça uma busca.';
+            lista.append(v);
+            return;
+          }
+          visiveis.forEach(function (ev, i) {
+            const card = evento(ev);
+            if (i === 0) card.open = true;   // o mais recente já abre formatado
+            lista.append(card);
+          });
+        } catch {
+          lista.textContent = 'Falha ao ler /api/monitor.';
+        }
+      }
+
+      selo.addEventListener('click', abrir);
+      selo.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); }
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && painel && !painel.hidden) fechar();
+      });
+      painel.querySelectorAll('[data-fechar]').forEach(function (el) {
+        el.addEventListener('click', fechar);
+      });
+      painel.querySelectorAll('[data-filtro]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          filtro = b.dataset.filtro;
+          painel.querySelectorAll('[data-filtro]').forEach(function (o) {
+            o.classList.toggle('ativo', o === b);
+          });
+          atualizar();
+        });
+      });
+      const ref = document.getElementById('monitor-atualizar');
+      if (ref) ref.addEventListener('click', atualizar);
+
+      try {
+        const r = await fetch('/api/diagnostico');
+        const j = await r.json();
+        selo.classList.add(j.bcb_soap ? 'ok' : 'fallback');
+      } catch { selo.classList.add('erro'); }
+    })();
+
+    // Lógica de abertura/fechamento do Menu Hambúrguer com acessibilidade e clique externo
+    (function () {
+      const btn = document.getElementById('menu-btn');
+      const menu = document.getElementById('menu-dropdown');
+      if (!btn || !menu) return;
+
+      function alternar(abrir) {
+        const estado = typeof abrir === 'boolean' ? abrir : !menu.classList.contains('aberto');
+        menu.classList.toggle('aberto', estado);
+        btn.classList.toggle('aberto', estado);
+        btn.setAttribute('aria-expanded', String(estado));
+      }
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        alternar();
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!menu.contains(e.target) && !btn.contains(e.target)) {
+          alternar(false);
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && menu.classList.contains('aberto')) {
+          alternar(false);
+          btn.focus();
+        }
+      });
+    })();
+  </script>
+  <script src="/static/js/echarts.min.js"></script>
+  {% block scripts %}{% endblock %}
+  <script src="/static/js/charts.js?v=15"></script>
+</body>
+
+</html>

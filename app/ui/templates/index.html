@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block corpo %}
+<div class="terminal-home">
+  <!-- Cabeçalho de inteligência / Hero -->
+  <section class="painel-hero">
+    <h1>Análise territorial e econômica com rigor estatístico.</h1>
+    <p>
+      Cruze demografia censitária, deflação oficial da economia pelo IPCA real
+      e densidade empresarial para diagnosticar potencial de mercado em 5.570 municípios.
+    </p>
+
+    <!-- Barra de busca do terminal -->
+    <div class="busca-terminal" data-busca>
+      <div class="busca-input-wrap">
+        <input id="busca-entrada" type="text" inputmode="search"
+               placeholder="Digite o nome de qualquer município (ex.: Curitiba, Ribeirão Preto, Joinville...)" autocomplete="off">
+        <span class="atalho-teclado">ESC limpa</span>
+      </div>
+      <ul id="busca-sugestoes" class="sugestoes" hidden></ul>
+    </div>
+
+    <!-- Hub de Acesso Rápido -->
+    <div class="hub-atalhos">
+      <span class="hub-titulo">Polos em destaque:</span>
+      <div class="chips-grid">
+        {% for id_, nome, uf in atalhos %}
+        <a class="chip" href="/municipio/{{ id_ }}">
+          <span class="chip-nome">{{ nome }}</span>
+          <span class="chip-uf">{{ uf }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Métricas e Capacidade Analítica da Plataforma -->
+  <section class="estatisticas-plataforma">
+    <div class="stat-card">
+      <span class="stat-valor">5.570</span>
+      <span class="stat-rotulo">Municípios mapeados</span>
+      <span class="stat-desc">Cobertura censitária nacional contínua</span>
+    </div>
+    
+    <div class="stat-card">
+      <span class="stat-valor">IPCA Real</span>
+      <span class="stat-rotulo">Deflação de Séries Históricas</span>
+      <span class="stat-desc">Cálculo de crescimento do PIB sem ilusão inflacionária</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-valor">CEMPRE</span>
+      <span class="stat-rotulo">Densidade Empresarial</span>
+      <span class="stat-desc">Mapeamento de concorrência e postos formais por mil hab.</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-valor">SOAP + REST</span>
+      <span class="stat-rotulo">Auditoria de Dados</span>
+      <span class="stat-desc">Origem direta em pipelines do IBGE e Banco Central</span>
+    </div>
+  </section>
+
+  <!-- Banner de ação analítica / Comparador -->
+  <section class="banner-comparador">
+    <div class="banner-conteudo">
+      <div class="banner-tag">Módulo Analítico</div>
+      <h2>Compare municípios lado a lado antes de decidir</h2>
+      <p>Coloque até 4 municípios no mesmo benchmark de PIB per capita, evolução demográfica e saturação de concorrência.</p>
+    </div>
+    <div class="banner-acao">
+      <a class="botao-terminal" href="/comparar">
+        <span>Abrir Módulo de Comparação</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

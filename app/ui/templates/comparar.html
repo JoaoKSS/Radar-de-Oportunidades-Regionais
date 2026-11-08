@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block titulo %}Comparar municípios | Radar de Oportunidades{% endblock %}
+
+{% block corpo %}
+<div class="comparador-painel">
+  <!-- Cabeçalho do módulo -->
+  <section class="comparador-hero">
+    <h1>Comparação Direta de Municípios</h1>
+    <p>Adicione de 2 a 4 municípios para confrontar indicadores de demanda populacional, dinâmica da economia real e concorrência comercial.</p>
+  </section>
+
+  <!-- Seletor em card estilo console / barra de benchmarking -->
+  <section class="seletor-card" data-comparador>
+    <div class="seletor-linha">
+      <div class="busca-wrap busca">
+        <input id="busca-entrada" type="text" inputmode="search"
+               placeholder="Buscar e adicionar município (ex.: Recife, Joinville, Campinas...)" autocomplete="off">
+        <ul id="busca-sugestoes" class="sugestoes" hidden></ul>
+      </div>
+      <button class="botao-comparar" id="comparar" disabled>
+        <span>Atualizar Comparativo</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- Cidades selecionadas no benchmark -->
+    <div class="slots-container">
+      <span class="slots-rotulo">Municípios selecionados:</span>
+      <div class="pilhas" id="pilhas">
+        {% for c in chips | default([]) %}
+        <span class="pilha" data-id="{{ c.id }}">
+          <span class="pilha-nome">{{ c.rotulo }}</span>
+          <button title="Remover" aria-label="Remover">&times;</button>
+        </span>
+        {% else %}
+        {% for i in ids %}
+        <span class="pilha" data-id="{{ i }}">
+          <span class="pilha-nome">{{ i }}</span>
+          <button title="Remover" aria-label="Remover">&times;</button>
+        </span>
+        {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if tabela %}
+  <!-- Matriz de Indicadores Comparativa -->
+  <section class="comp-matriz-secao">
+    <div class="comp-cab-secao">
+      <h2>Matriz de Indicadores Comparativos</h2>
+    </div>
+
+    <div class="tabela-scroll" tabindex="0" role="region" aria-label="Tabela de indicadores comparativos de municípios">
+      <table class="comp">
+        <thead>
+          <tr>
+            <th scope="col" class="th-indicador">Indicador</th>
+            {% for c in tabela.cabecalho %}
+            <th scope="col" class="th-cidade">{{ c }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for linha in tabela.linhas %}
+          <tr>
+            <th scope="row" class="td-rotulo">{{ linha.nome }}</th>
+            {% for v in linha.valores %}
+            <td class="td-valor">
+              <span class="valor-num">{{ v.0 }}</span>
+              {% if v.1 %}
+              <span class="sinal-tag {{ v.1 }}">
+                {{ {"excelente":"▲ Forte","estavel":"• Neutro","ruim":"▼ Atenção","nulo":"• —"}[v.1] }}
+              </span>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Gráficos Comparativos Lado a Lado -->
+  <section class="comp-graficos-grid">
+    <div class="card-grafico">
+      <div class="grafico-topo">
+        <h3>PIB per capita</h3>
+        <span class="grafico-unidade">R$ mil / habitante</span>
+      </div>
+      <div id="chart-pc" class="grafico-comp"></div>
+    </div>
+
+    <div class="card-grafico">
+      <div class="grafico-topo">
+        <h3>Crescimento Populacional</h3>
+        <span class="grafico-unidade">Variação em 5 anos (%)</span>
+      </div>
+      <div id="chart-cresc" class="grafico-comp"></div>
+    </div>
+  </section>
+
+  {% else %}
+  <!-- Empty State Elegante -->
+  <div class="empty-state-comparar">
+    <div class="empty-icone">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M18 20V10M12 20V4M6 20v-6"/>
+      </svg>
+    </div>
+    <h3>Nenhum comparativo ativo</h3>
+    <p>Adicione pelo menos dois municípios na barra de busca acima para gerar a matriz de dados e os gráficos comparativos.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="comparador-ids" type="application/json">{{ ids | tojson }}</script>
+{% if tabela %}
+<script id="comparar-graficos" type="application/json">{{ graficos | safe }}</script>
+{% endif %}
+
+<script>
+  window.__COMPARADOR__ = { idsSelecionados: JSON.parse(document.getElementById('comparador-ids').textContent) };
+  var elGraficos = document.getElementById('comparar-graficos');
+  if (elGraficos) {
+    window.__COMPARAR__ = JSON.parse(elGraficos.textContent);
+  }
+</script>
+{% endblock %}
