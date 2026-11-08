@@ -795,6 +795,23 @@ a:hover {
   max-height: 320px;
   overflow-y: auto;
   text-align: left;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.sugestoes::-webkit-scrollbar {
+  width: 6px;
+}
+.sugestoes::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 6px 0;
+}
+.sugestoes::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+.sugestoes::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 .sugestoes li {
   margin: 0;
@@ -1521,13 +1538,22 @@ a:hover {
 .pilha button {
   all: unset;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
   color: var(--acento);
-  font-size: 16px;
-  line-height: 1;
-  font-weight: 700;
-  transition: color 0.15s;
+  transition: all 0.15s ease;
+}
+.pilha button svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
 }
 .pilha button:hover {
+  background: rgba(190, 18, 60, 0.12);
   color: var(--risco);
 }
 

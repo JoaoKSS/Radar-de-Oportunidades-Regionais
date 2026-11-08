@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+import datetime as dt
 import json
 import logging
 from pathlib import Path
@@ -39,10 +40,10 @@ async def _aquecer_cache():
         for id_mun, nome, uf in ATALHOS:
             try:
                 await dados_municipio(id_mun)
-                _log.info(f"✓ Cache pronto: {nome} ({uf})")
+                _log.info(f"Cache pronto: {nome} ({uf})")
             except Exception as erro:
                 _log.warning(f"Falha ao pré-aquecer {nome}: {erro}")
-        _log.info("🚀 Pré-aquecimento concluído: todas as cidades em destaque já estão em memória.")
+        _log.info("Pré-aquecimento concluído: todas as cidades em destaque já estão em memória.")
     except Exception as erro:
         _log.warning(f"Erro no pré-aquecimento geral: {erro}")
 
@@ -82,6 +83,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 _AQUI = Path(__file__).resolve().parent
 app.mount("/static", StaticFilesComCache(directory=_AQUI / "ui" / "static"), name="static")
 templates = Jinja2Templates(directory=_AQUI / "ui" / "templates")
+templates.env.globals["ano_atual"] = lambda: dt.date.today().year
 
 # Municípios de atalho da página inicial
 ATALHOS = [

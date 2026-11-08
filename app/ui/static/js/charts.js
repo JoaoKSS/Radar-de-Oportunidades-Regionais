@@ -716,7 +716,8 @@
         var p = document.createElement('span');
         p.className = 'pilha'; p.dataset.id = id;
         var s = document.createElement('span'); s.className = 'pilha-nome'; s.textContent = nome + ' · ' + uf;
-        var x = document.createElement('button'); x.type = 'button'; x.title = 'Remover'; x.textContent = '×';
+        var x = document.createElement('button'); x.type = 'button'; x.title = 'Remover'; x.setAttribute('aria-label', 'Remover');
+        x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
         p.append(s, x); pilhas.append(p);
         atualizarEstadoComparador();
       });
