@@ -14,7 +14,9 @@
     <div class="seletor-linha">
       <div class="busca-wrap busca">
         <input id="busca-entrada" type="text" inputmode="search"
-               placeholder="Buscar e adicionar município (ex.: Recife, Joinville, Campinas...)" autocomplete="off">
+               placeholder="{% if ids | length >= 4 %}Limite de 4 municípios atingido (remova um para trocar){% else %}Buscar e adicionar município (ex.: Recife, Joinville, Campinas...){% endif %}"
+               autocomplete="off"
+               {% if ids | length >= 4 %}disabled{% endif %}>
         <ul id="busca-sugestoes" class="sugestoes" hidden></ul>
       </div>
       <button class="botao-comparar" id="comparar" disabled>

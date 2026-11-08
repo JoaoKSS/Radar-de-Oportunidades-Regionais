@@ -652,10 +652,39 @@
     var pilhas = document.getElementById('pilhas');
     var btn = document.getElementById('comparar');
 
-    function atualizarBotao() {
-      if (btn) btn.disabled = document.querySelectorAll('.pilha').length < 2;
+    function atualizarEstadoComparador() {
+      var qtd = document.querySelectorAll('.pilha').length;
+      if (selecionados !== null) {
+        if (qtd >= 4) {
+          entrada.disabled = true;
+          entrada.placeholder = 'Limite de 4 municípios atingido (remova um para trocar)';
+          entrada.title = 'Limite máximo de 4 municípios atingido. Remova um município para adicionar outro.';
+          sugestoes.hidden = true;
+        } else {
+          entrada.disabled = false;
+          entrada.placeholder = 'Buscar e adicionar município (ex.: Recife, Joinville, Campinas...)';
+          entrada.title = '';
+        }
+
+        var idsAtuais = [...document.querySelectorAll('.pilha')].map(function (p) { return Number(p.dataset.id); });
+        var idsCarregados = (window.__COMPARADOR__ && window.__COMPARADOR__.idsSelecionados) || [];
+        var saoIguais = idsAtuais.length === idsCarregados.length &&
+          idsAtuais.every(function (id, idx) { return id === idsCarregados[idx]; });
+
+        if (btn) {
+          btn.disabled = qtd < 2 || qtd > 4 || saoIguais;
+          if (btn.disabled) {
+            btn.title = qtd < 2 ? 'Selecione pelo menos 2 municípios' :
+                        (qtd >= 4 && saoIguais ? 'Limite de 4 municípios atingido' : 'Comparativo já atualizado');
+          } else {
+            btn.title = 'Atualizar os gráficos e a matriz comparativa';
+          }
+        }
+      } else if (btn) {
+        btn.disabled = qtd < 2;
+      }
     }
-    atualizarBotao();
+    atualizarEstadoComparador();
 
     // Event delegation para remover as pilhas tanto iniciais (renderizadas pelo servidor) quanto criadas dinamicamente
     if (pilhas) {
@@ -665,7 +694,7 @@
           var p = btnRemover.closest('.pilha');
           if (p) {
             p.remove();
-            atualizarBotao();
+            atualizarEstadoComparador();
           }
         }
       });
@@ -682,13 +711,14 @@
         ev.preventDefault();
         sugestoes.hidden = true; entrada.value = '';
         if (selecionados === null) { location.href = '/municipio/' + id; return; }
+        if (document.querySelectorAll('.pilha').length >= 4) return;
         if (document.querySelector('.pilha[data-id="' + id + '"]')) return;
         var p = document.createElement('span');
         p.className = 'pilha'; p.dataset.id = id;
         var s = document.createElement('span'); s.className = 'pilha-nome'; s.textContent = nome + ' · ' + uf;
         var x = document.createElement('button'); x.type = 'button'; x.title = 'Remover'; x.textContent = '×';
         p.append(s, x); pilhas.append(p);
-        atualizarBotao();
+        atualizarEstadoComparador();
       });
       li.append(a); sugestoes.append(li);
     }
