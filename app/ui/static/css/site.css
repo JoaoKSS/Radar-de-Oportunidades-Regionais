@@ -1229,7 +1229,7 @@ a:hover {
 .lista-local strong { text-align: right; font-weight: 600; color: var(--tinta); }
 
 .mini-contexto {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0 24px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 20px 0 24px;
 }
 @media (max-width: 700px) { .mini-contexto { grid-template-columns: 1fr; } }
 .mini {

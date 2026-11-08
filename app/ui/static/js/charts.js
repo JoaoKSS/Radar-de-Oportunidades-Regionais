@@ -517,7 +517,16 @@
     render('chart-pc', grade({
       xAxis: { type: 'category', data: G.labels,
                axisLine: { lineStyle: { color: BORDA } },
-               axisLabel: { color: TINTA_FRACA, fontSize: 12, fontWeight: 600 }, axisTick: { show: false } },
+               axisLabel: {
+                 color: TINTA_FRACA,
+                 fontSize: 11,
+                 fontWeight: 600,
+                 interval: 0,
+                 width: 90,
+                 overflow: 'truncate',
+                 ellipsis: '…'
+               },
+               axisTick: { show: false } },
       yAxis: { type: 'value',
                splitLine: { lineStyle: { color: '#f1f5f9' } },
                axisLabel: { color: TINTA_FRACA, fontSize: 11.5,
@@ -537,12 +546,21 @@
           shadowBlur: 6,
         }
       }],
-    }));
+    }, { bottom: 32 }));
 
     render('chart-cresc', grade({
       xAxis: { type: 'category', data: G.labels,
                axisLine: { lineStyle: { color: BORDA } },
-               axisLabel: { color: TINTA_FRACA, fontSize: 12, fontWeight: 600 }, axisTick: { show: false } },
+               axisLabel: {
+                 color: TINTA_FRACA,
+                 fontSize: 11,
+                 fontWeight: 600,
+                 interval: 0,
+                 width: 90,
+                 overflow: 'truncate',
+                 ellipsis: '…'
+               },
+               axisTick: { show: false } },
       yAxis: { type: 'value', axisLabel: { color: TINTA_FRACA, formatter: '{value}%', fontSize: 11.5 },
                splitLine: { lineStyle: { color: '#f1f5f9' } } },
       tooltip: { trigger: 'axis',
@@ -562,7 +580,67 @@
         }),
         barWidth: '38%'
       }],
-    }));
+    }, { bottom: 32 }));
+
+    /* 3. Vocação Econômica Comparativa (VAB Setorial 100% Empilhado) */
+    if (G.vab && G.vab.length) {
+      render('chart-vab-comp', grade({
+        legend: {
+          top: 0,
+          right: 0,
+          icon: 'circle',
+          itemWidth: 8,
+          itemGap: 14,
+          textStyle: { color: TINTA_FRACA, fontSize: 11.5, fontWeight: 500 }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: function (ps) {
+            var t = '<strong>' + ps[0].axisValue + '</strong><br/>';
+            ps.forEach(function (p) {
+              t += p.marker + ' ' + p.seriesName + ': <strong>' + Number(p.value).toFixed(1) + '%</strong><br/>';
+            });
+            return t;
+          }
+        },
+        xAxis: {
+          type: 'category',
+          data: G.labels,
+          axisLine: { lineStyle: { color: BORDA } },
+          axisLabel: { color: TINTA_FRACA, fontSize: 12, fontWeight: 600 },
+          axisTick: { show: false }
+        },
+        yAxis: {
+          type: 'value',
+          max: 100,
+          axisLabel: { color: TINTA_FRACA, formatter: '{value}%', fontSize: 11 },
+          splitLine: { lineStyle: { color: '#f1f5f9' } }
+        },
+        series: [
+          {
+            name: 'Serviços', type: 'bar', stack: 'total',
+            data: G.vab.map(function (d) { return d.servicos; }),
+            itemStyle: { color: '#0d5f4c' }, barWidth: '42%'
+          },
+          {
+            name: 'Indústria', type: 'bar', stack: 'total',
+            data: G.vab.map(function (d) { return d.industria; }),
+            itemStyle: { color: '#0284c7' }
+          },
+          {
+            name: 'Adm. Pública', type: 'bar', stack: 'total',
+            data: G.vab.map(function (d) { return d.admin; }),
+            itemStyle: { color: '#d97706' }
+          },
+          {
+            name: 'Agropecuária', type: 'bar', stack: 'total',
+            data: G.vab.map(function (d) { return d.agro; }),
+            itemStyle: { color: '#10b981' }
+          }
+        ]
+      }, { top: 38, bottom: 12 }));
+    }
   }
 
   /* ---------- autocomplete (início + comparador) ---------- */

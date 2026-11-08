@@ -272,6 +272,9 @@ async def pagina_comparar(
                 lambda d: _valor_em(d, "pib", "tag")),
             lin("PIB per capita",
                 lambda d: _fmt_pib(_valor_em(d, "pib_pc", "valor"))),
+            lin("Salário médio formal (estimado)",
+                lambda d: (f'{_fmt_pib(_valor_em(d, "empresas", "salario_medio"))} /mês'
+                           if _valor_em(d, "empresas", "salario_medio") else "—")),
             lin("Empresas ativas · CEMPRE",
                 lambda d: f'{_fmt_num(_valor_em(d, "empresas", "n"))}'
                           + (f' ({_valor_em(d, "empresas", "ano")})'
@@ -297,11 +300,27 @@ async def pagina_comparar(
             "cresc_pop": [
                 round((_valor_em(d, "populacao", "cresc_5a") or 0) * 100, 1) for d in per
             ],
+            "vab": [
+                {
+                    "cidade": cabecalho[idx],
+                    "servicos": round(d.get("vab_setorial", {}).get("participacao_pct", {}).get("servicos") or 0, 1),
+                    "industria": round(d.get("vab_setorial", {}).get("participacao_pct", {}).get("industria") or 0, 1),
+                    "admin": round(d.get("vab_setorial", {}).get("participacao_pct", {}).get("admin") or 0, 1),
+                    "agro": round(d.get("vab_setorial", {}).get("participacao_pct", {}).get("agro") or 0, 1),
+                }
+                for idx, d in enumerate(per)
+            ]
         }
+
+    contexto_cards: list[dict[str, str]] = []
+    if lista:
+        contexto_raw = await bcb.contexto_financeiro()
+        contexto_cards = _contexto_resumo(contexto_raw)
 
     return _render(request, "comparar.html", {
         "tabela": {"cabecalho": cabecalho, "linhas": linhas} if cabecalho else None,
         "graficos": json.dumps(graficos, ensure_ascii=False),
         "chips": chips,
         "ids": lista,
+        "contexto": contexto_cards,
     })
