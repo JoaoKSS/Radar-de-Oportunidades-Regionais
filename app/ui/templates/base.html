@@ -245,9 +245,8 @@
             lista.append(v);
             return;
           }
-          visiveis.forEach(function (ev, i) {
+          visiveis.forEach(function (ev) {
             const card = evento(ev);
-            if (i === 0) card.open = true;   // o mais recente já abre formatado
             lista.append(card);
           });
         } catch {
