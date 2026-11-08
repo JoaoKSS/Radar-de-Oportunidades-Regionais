@@ -1,5 +1,3 @@
-/* Radar de Oportunidades — renderização ECharts com identidade refinada:
-   Paleta: Emerald Pro / Dark Tooltips / Gradientes suaves */
 (function () {
   'use strict';
 
@@ -52,10 +50,8 @@
 
   function rotulosAno(arr) { return (arr || []).map(String); }
 
-  /* ---------- painel do município ---------- */
   var R = window.__RADAR__;
 
-  /* 1. Gráfico de População (Área com Gradiente) */
   if (R && R.pop && R.pop.valores.length) {
     render('chart-pop', grade({
       xAxis: { type: 'category', data: rotulosAno(R.pop.anos), boundaryGap: false,
@@ -86,7 +82,6 @@
     }));
   }
 
-  /* 2. Gráfico de PIB (Nominal vs Real Deflacionado) */
   if (R && R.pib && R.pib.nominal.length) {
     var demonom = R.pib.nominal.map(function (v) { return (v * 1000) / 1e9; });
     var ser = [{
@@ -131,7 +126,6 @@
     }, { top: 38 }));
   }
 
-  /* 2.1 Composição Econômica Setorial (Donut Chart) */
   if (R && R.vab && R.vab.valores_mil && Object.keys(R.vab.valores_mil).length) {
     var vMap = R.vab.valores_mil;
     var vPct = R.vab.participacao_pct || {};
@@ -214,7 +208,6 @@
     }));
   }
 
-  /* 4. IPCA 12 Meses (Linha contínua com markline de meta) */
   if (R && R.ipca12 && R.ipca12.meses.length) {
     render('chart-ipca12', grade({
       xAxis: { type: 'category', data: R.ipca12.meses, boundaryGap: false,
@@ -243,7 +236,6 @@
     }));
   }
 
-  /* 5. Crédito Empresarial (Juros de Capital de Giro x Inadimplência PJ - Duplo Eixo) */
   if (R && R.credito && R.credito.meses && R.credito.meses.length) {
     var cMeses = R.credito.meses;
     var cJuros = R.credito.juros_giro;
@@ -305,7 +297,6 @@
     }, { top: 58, bottom: 12 }));
   }
 
-  /* ---------- mapa de localização (IBGE Malhas) ---------- */
   if (R && R.geo && document.getElementById('chart-mapa')) {
     fetch('/api/malha/brasil')
       .then(function (r) { return r.json(); })
@@ -320,7 +311,7 @@
           map: 'brasil-uf',
           roam: true,
           scaleLimit: {
-            min: 0.85, // Enquadramento perfeito: mostra o Brasil inteiro preenchendo a área útil sem encolher demais
+            min: 0.85,
             max: 12
           },
           silent: false,
@@ -373,7 +364,6 @@
           }]
         });
 
-        // Adiciona uma camada de linha para o contorno do estado selecionado
         var ufFeature = (malha.features || []).find(function (f) {
           return f.properties && f.properties.name === R.uf;
         });
@@ -464,7 +454,6 @@
           series: series,
         });
 
-        // Botão para restaurar a visão e enquadramento original do estado
         var btnReset = document.getElementById('btn-centralizar-mapa');
         if (btnReset && mapChart) {
           mapChart.on('georoam', function () {
@@ -481,7 +470,7 @@
             btnReset.classList.remove('visivel');
           });
         }
-        // Intercepta e suaviza a aceleração excessiva do scroll do mouse
+
         var mapDom = document.getElementById('chart-mapa');
         if (mapDom && mapChart) {
           mapDom.addEventListener('wheel', function (e) {
@@ -511,7 +500,6 @@
       .catch(function () {});
   }
 
-  /* ---------- comparador ---------- */
   var G = window.__COMPARAR__;
   if (G && G.labels && G.labels.length) {
     render('chart-pc', grade({
@@ -582,7 +570,6 @@
       }],
     }, { bottom: 32 }));
 
-    /* 3. Vocação Econômica Comparativa (VAB Setorial 100% Empilhado) */
     if (G.vab && G.vab.length) {
       render('chart-vab-comp', grade({
         legend: {
@@ -643,7 +630,6 @@
     }
   }
 
-  /* ---------- autocomplete (início + comparador) ---------- */
   var entrada = document.getElementById('busca-entrada');
   var sugestoes = document.getElementById('busca-sugestoes');
   if (entrada && sugestoes) {
@@ -686,7 +672,6 @@
     }
     atualizarEstadoComparador();
 
-    // Event delegation para remover as pilhas tanto iniciais (renderizadas pelo servidor) quanto criadas dinamicamente
     if (pilhas) {
       pilhas.addEventListener('click', function (ev) {
         var btnRemover = ev.target.closest('button');
@@ -783,7 +768,7 @@
         } catch { sugestoes.hidden = true; }
       }, 140);
     });
-    // Trata tecla Escape globalmente (mesmo se o foco estiver fora do input)
+
     document.addEventListener('keydown', function (ev) {
       if (ev.key === 'Escape') {
         var mudouAlgo = false;

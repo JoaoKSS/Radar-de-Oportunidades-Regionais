@@ -1,17 +1,7 @@
-"""Indicadores derivados — transformam séries brutas em decisões.
-
-Combina as duas integrações:
-  * PIB municipal (REST/SIDRA, valores nominais) é deflacionado pelo IPCA
-    real (SOAP/BCB) → crescimento econômico de verdade, sem efeito inflação.
-"""
 from __future__ import annotations
 
 import datetime as dt
 from typing import Any
-
-# ------------------------------------------------------------------
-# Utilidades numéricas
-# ------------------------------------------------------------------
 
 def cagr(inicial: float, final: float, anos: float) -> float | None:
     if anos <= 0 or inicial <= 0:
@@ -27,7 +17,7 @@ def variacao(inicial: float | None, final: float | None) -> float | None:
     return final / inicial - 1
 
 def classificar(crescimento: float | None, bom: float, ruim: float) -> str:
-    """'excelente' | 'boa' | 'estavel' | 'ruim'."""
+
     if crescimento is None:
         return "nulo"
     if crescimento >= bom:
@@ -36,17 +26,7 @@ def classificar(crescimento: float | None, bom: float, ruim: float) -> str:
         return "estavel"
     return "ruim"
 
-# ------------------------------------------------------------------
-# Deflacionador — IPCA (SOAP do BCB) → índice de preços
-# ------------------------------------------------------------------
-
 class Deflator:
-    """Índice de preços a partir do IPCA mensal (SOAP/BCB).
-
-    ``I(ano)`` = produto cumulativo até o dezembro do ano.
-    Converter valores do ano X para preços do ano-base B:
-      ``valor(X) × I(base) / I(X)``  (multiplique PELA inflação entre X e B).
-    """
 
     def __init__(self, pontos_ipca: list[dict[str, Any]]) -> None:
         self._cumul: dict[int, float] = {}
@@ -71,7 +51,7 @@ class Deflator:
         return self._base
 
     def deflacionar(self, serie: dict[int, float]) -> dict[int, float]:
-        """Converte para preços de dezembro do último ano completo da série IPCA."""
+
         if not self.ativo() or not serie:
             return dict(serie)
         ano_base = self._base
@@ -80,13 +60,9 @@ class Deflator:
         for ano, valor in serie.items():
             f_ano = self._cumul.get(ano)
             if f_ano is None or f_ano <= 0:
-                continue  # ano sem dezembro na série IPCA — fica de fora
+                continue
             saida[ano] = valor * f_base / f_ano
         return dict(sorted(saida.items()))
-
-# ------------------------------------------------------------------
-# Painel executivo de um município
-# ------------------------------------------------------------------
 
 def painel_indicadores(
     populacao: dict[int, float],
@@ -96,7 +72,7 @@ def painel_indicadores(
     rank_pib: tuple[int | None, int | None],
     participacao: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Resumo com taxas que alimentam cards, gráficos e insights."""
+
     pop_ano = max(populacao) if populacao else None
     pop_valor = populacao.get(pop_ano) if pop_ano else None
     pop_antes = populacao.get(pop_ano - 5) if pop_ano else None
@@ -115,11 +91,10 @@ def painel_indicadores(
     emprego_n = empresas.get("empregos")
     assalariados_n = empresas.get("assalariados")
     salarios_mil = empresas.get("salarios")
-    
+
     empresas_pc = emp_n / pop_valor * 1000 if emp_n and pop_valor else None
     empregos_empresa = emprego_n / emp_n if emp_n and emprego_n else None
-    
-    # Salário médio mensal estimado em R$
+
     salario_medio = (salarios_mil * 1000 / 12) / assalariados_n if (salarios_mil and assalariados_n and assalariados_n > 0) else None
 
     return {

@@ -1,9 +1,3 @@
-"""Monitor de integrações — anel circular das requisições REST e SOAP.
-
-Cada chamada real feita ao IBGE (REST) ou ao BCB (SOAP) registra aqui:
-o que foi enviado (URL / envelope) e o que voltou (JSON / XML), com
-status e duração. A UI de inspeção (/api/monitor) lê deste anel.
-"""
 from __future__ import annotations
 
 import time
@@ -15,13 +9,11 @@ MAX_CARACTERES = 6_000
 
 _eventos: Deque[dict[str, Any]] = deque(maxlen=MAX_EVENTOS)
 
-
 def _cortar(texto: str) -> str:
     m = str(texto or "")
     if len(m) <= MAX_CARACTERES:
         return m
     return m[:MAX_CARACTERES] + f"\n\n… [{len(m):,} caracteres no total, cortado para exibição]"
-
 
 def registrar(
     protocolo: str,
@@ -32,7 +24,7 @@ def registrar(
     enviado: str = "",
     recebido: str = "",
 ) -> None:
-    """Adiciona um evento (mais recente primeiro). Nunca levanta exceção."""
+
     try:
         _eventos.appendleft({
             "protocolo": protocolo,
@@ -43,9 +35,8 @@ def registrar(
             "enviado": _cortar(enviado),
             "recebido": _cortar(recebido),
         })
-    except Exception:  # monitor jamais derruba a aplicação
+    except Exception:
         pass
-
 
 def ultimos(protocolo: str | None = None) -> list[dict[str, Any]]:
     nome = (protocolo or "").strip().upper()

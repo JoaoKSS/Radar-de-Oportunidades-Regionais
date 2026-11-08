@@ -1,13 +1,3 @@
-"""Integração REST — IBGE.
-
-Duas superfícies:
-  * API v1 de Localidades — catálogo dos 5.570 municípios.
-  * API SIDRA — séries municipais (população, PIB, empresas).
-
-Nota de robustez: o SIDRA alterna a ordem das dimensões (D2/D3) entre
-respostas — por isso as colunas são mapeadas pelo cabeçalho, nunca pela
-posição.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -59,25 +49,21 @@ def http() -> httpx.AsyncClient:
 def _normalizar(texto: str) -> str:
     return unicodedata.normalize("NFD", texto).encode("ascii", "ignore").decode().lower()
 
-
 LIMITE_REGISTROS = 10
-
 
 def _rotulo_url(url: str) -> str:
     p = urlsplit(url)
     rotulo = p.netloc + p.path + (f"?{p.query}" if p.query else "")
     return rotulo if len(rotulo) <= 72 else rotulo[:69] + "…"
 
-
 def _pedido_legivel(url: str) -> str:
-    """Requisição REST no formato legível (linha de pedido + Host)."""
+
     p = urlsplit(url)
     alvo = p.path + (f"?{p.query}" if p.query else "")
     return f"GET {alvo}\nHost: {p.netloc}"
 
-
 def _resumo_json(texto: str) -> str:
-    """Reindenta o JSON; listas longas cortam por registros, com nota."""
+
     try:
         dados = json.loads(texto)
     except (ValueError, TypeError):
@@ -89,9 +75,8 @@ def _resumo_json(texto: str) -> str:
         return f"{corpo}\n\n… [{total_txt} registros no total — exibindo {LIMITE_REGISTROS}]"
     return json.dumps(dados, ensure_ascii=False, indent=2)
 
-
 async def _consulta(url: str) -> httpx.Response:
-    """GET instrumentado — registra ida (URL) e volta (JSON) no monitor."""
+
     ini = time.perf_counter()
     try:
         resp = await http().get(url)
@@ -115,12 +100,7 @@ async def _consulta(url: str) -> httpx.Response:
         )
         raise
 
-# ------------------------------------------------------------------
-# Localidades
-# ------------------------------------------------------------------
-
 async def lista_municipios() -> list[dict[str, Any]]:
-    """Todos os municípios (id, nome, UF, região) — cache de 24 h."""
 
     async def _baixar() -> list[dict[str, Any]]:
         resp = await _consulta(IBGE_LOCALIDADES)
@@ -141,9 +121,8 @@ async def lista_municipios() -> list[dict[str, Any]]:
 
     return await CACHE.get_or_set("ibge:municipios", TTL_LOCALIDADES, _baixar)
 
-
 def extrai_uf(m: dict[str, Any]) -> dict[str, Any] | None:
-    """UF do município com rotas alternativas (nem todo município vem com micror/mesorr)."""
+
     for caminho in (
         ("microrregiao", "mesorregiao", "UF"),
         ("regiao-imediata", "UF"),
@@ -178,10 +157,6 @@ async def municipio_por_id(id_municipio: int) -> dict[str, Any] | None:
             return m
     return None
 
-# ------------------------------------------------------------------
-# SIDRA — consumo genérico e parsing robusto
-# ------------------------------------------------------------------
-
 def _num(v: Any) -> float | None:
     if v is None:
         return None
@@ -194,11 +169,7 @@ def _num(v: Any) -> float | None:
         return None
 
 def mapear_dimensoes(header: dict[str, str]) -> dict[str, str | None]:
-    """Descobre qual coluna é município / ano / variável pelo cabeçalho.
 
-    O SIDRA alterna a ordem (D2↔D3) — mapear pelo nome é a única
-    forma estável de ler as linhas.
-    """
     col: dict[str, str | None] = {"mun": None, "ano": None, "var": None}
     for chave, rotulo in header.items():
         if not chave.endswith("N") or chave in ("NC", "NN", "MC", "MN"):
@@ -213,7 +184,7 @@ def mapear_dimensoes(header: dict[str, str]) -> dict[str, str | None]:
     return col
 
 def serie_por_ano(header: dict[str, str], linhas: list[dict[str, str]], var_prefixo: str) -> dict[int, float]:
-    """Extrai {ano: valor} da tabela SIDRA por nome da variável."""
+
     dim = mapear_dimensoes(header)
     var_col, ano_col = dim["var"], dim["ano"]
     saida: dict[int, float] = {}
@@ -229,7 +200,7 @@ def serie_por_ano(header: dict[str, str], linhas: list[dict[str, str]], var_pref
     return dict(sorted(saida.items()))
 
 async def sidra(tabela: int, ids: Any, var: str = "all", periodo: str = "") -> tuple[dict[str, str], list[dict[str, str]]]:
-    """Consulta SIDRA e devolve (cabeçalho, linhas)."""
+
     template = SIDRA_URL if periodo else SIDRA_URL_S_PERIODO
     if isinstance(ids, (list, tuple)):
         ids = ",".join(str(i) for i in ids)
@@ -240,20 +211,8 @@ async def sidra(tabela: int, ids: Any, var: str = "all", periodo: str = "") -> t
         return {}, []
     return dados[0], dados[1:]
 
-# ------------------------------------------------------------------
-# Séries municipais — fachadas de alto nível
-# ------------------------------------------------------------------
-
-# ------------------------------------------------------------------
-# Malhas geográficas (API v3 — contornos oficiais em GeoJSON)
-# ------------------------------------------------------------------
-
 async def malha_brasil() -> dict[str, Any]:
-    """GeoJSON do Brasil recortado por UF, com ``name`` = sigla da UF.
 
-    O ECharts usa ``properties.name`` para casar regiões — as features do
-    IBGE trazem só ``codarea`` (código de 2 dígitos), traduzido aqui.
-    """
     async def _baixar() -> dict[str, Any]:
         resp = await _consulta(MALHA_BRASIL)
         malha = resp.json()
@@ -263,7 +222,6 @@ async def malha_brasil() -> dict[str, Any]:
         return malha
 
     return await CACHE.get_or_set("ibge:malha-brasil", TTL_LOCALIDADES, _baixar)
-
 
 def _pontos_da_geometria(geom: dict[str, Any] | None) -> list[tuple[float, float]]:
     pontos: list[tuple[float, float]] = []
@@ -279,9 +237,8 @@ def _pontos_da_geometria(geom: dict[str, Any] | None) -> list[tuple[float, float
                 pontos.extend((c[0], c[1]) for c in anel)
     return pontos
 
-
 def _centroide(geojson: dict[str, Any]) -> dict[str, float] | None:
-    """Centro aproximado do município (média dos vértices do contorno)."""
+
     pontos: list[tuple[float, float]] = []
 
     def anda(no: Any) -> None:
@@ -303,7 +260,6 @@ def _centroide(geojson: dict[str, Any]) -> dict[str, float] | None:
         "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
     }
 
-
 async def centro_municipio(id_mun: int) -> dict[str, float] | None:
     async def _baixar() -> dict[str, float] | None:
         resp = await _consulta(MALHA_MUNICIPIO.format(id=id_mun))
@@ -312,7 +268,7 @@ async def centro_municipio(id_mun: int) -> dict[str, float] | None:
     return await CACHE.get_or_set(f"ibge:centro:{id_mun}", TTL_LOCALIDADES, _baixar)
 
 async def metadados_territoriais(id_mun: int) -> dict[str, Any]:
-    """Extensão territorial oficial calculada pelo IBGE (km²)."""
+
     async def _baixar() -> dict[str, Any]:
         try:
             resp = await _consulta(MALHA_MUNICIPIO_METADADOS.format(id=id_mun))
@@ -332,7 +288,6 @@ async def metadados_territoriais(id_mun: int) -> dict[str, Any]:
 
     return await CACHE.get_or_set(f"ibge:meta-territorio:{id_mun}", TTL_LOCALIDADES, _baixar)
 
-
 async def serie_populacao(id_mun: int) -> dict[int, float]:
     header, linhas = await sidra(TAB_POPULACAO, id_mun, var=str(VAR_POPULACAO), periodo="all")
     return serie_por_ano(header, linhas, "População residente estimada")
@@ -342,7 +297,7 @@ async def serie_pib(id_mun: int) -> dict[int, float]:
     return serie_por_ano(header, linhas, "Produto Interno Bruto a preços correntes")
 
 async def composicao_setorial_pib(id_mun: int) -> dict[str, Any]:
-    """Valor Adicionado Bruto por setor no último ano apurado pelo IBGE (mil R$)."""
+
     async def _baixar() -> dict[str, Any]:
         vars_str = ",".join(VARS_VAB_SETORIAL.values())
         header, linhas = await sidra(TAB_PIB, id_mun, var=vars_str, periodo="all")
@@ -350,7 +305,6 @@ async def composicao_setorial_pib(id_mun: int) -> dict[str, Any]:
         ano_col = dim.get("ano")
         var_col = dim.get("var")
 
-        # Organiza por ano: {2021: {'agro': ..., 'industria': ...}}
         anos_map: dict[int, dict[str, float]] = {}
         var_inv = {v: k for k, v in VARS_VAB_SETORIAL.items()}
 
@@ -358,7 +312,7 @@ async def composicao_setorial_pib(id_mun: int) -> dict[str, Any]:
             val = _num(r.get("V"))
             ano_val = _num(r.get(ano_col)) if ano_col else None
             var_code = r.get("D3C") or r.get("D2C") or r.get(var_col)
-            # tenta casar com o código ou nome
+
             chave = var_inv.get(str(var_code))
             if not chave and var_col:
                 v_nome = str(r.get(var_col, "")).lower()
@@ -375,7 +329,6 @@ async def composicao_setorial_pib(id_mun: int) -> dict[str, Any]:
                 ano_int = int(ano_val)
                 anos_map.setdefault(ano_int, {})[chave] = val
 
-        # Retorna o ano mais recente que contenha os setores apurados
         anos_validos = sorted([a for a, s in anos_map.items() if len(s) >= 3])
         if not anos_validos:
             return {"ano": None, "setores": {}}
@@ -394,7 +347,6 @@ async def composicao_setorial_pib(id_mun: int) -> dict[str, Any]:
     return await CACHE.get_or_set(f"sidra:vab-setorial:{id_mun}", TTL_SIDRA, _baixar)
 
 async def indicadores_empresas(id_mun: int) -> dict[str, Any]:
-    """Último referencial do CEMPRE (CEMPRE = Cadastro Central de Empresas)."""
 
     async def _baixar() -> dict[str, Any]:
         header, linhas = await sidra(TAB_EMPRESAS, id_mun, var="all", periodo="last")
@@ -423,7 +375,7 @@ async def indicadores_empresas(id_mun: int) -> dict[str, Any]:
             nome = r.get(var_col, "")
             key = mapeia.get(nome if isinstance(nome, str) else "")
             if key is None:
-                continue  # ignora variantes "- percentual do total geral"
+                continue
             val = _num(r.get("V"))
             ano_val = _num(r.get(dim["ano"])) if dim["ano"] else None
             if val is not None:
@@ -434,16 +386,15 @@ async def indicadores_empresas(id_mun: int) -> dict[str, Any]:
     return await CACHE.get_or_set(f"sidra:empresas:{id_mun}", TTL_SIDRA, _baixar)
 
 async def malha_uf(uf_id: str | int) -> dict[str, Any]:
-    """GeoJSON do estado recortado por município (uma chamada para todos)."""
+
     async def _baixar() -> dict[str, Any]:
         resp = await _consulta(MALHA_ESTADO.format(uf_id=uf_id))
         return resp.json()
 
     return await CACHE.get_or_set(f"ibge:malha-uf:{uf_id}", TTL_LOCALIDADES, _baixar)
 
-
 async def centros_uf(uf_id: str | int) -> dict[int, dict[str, float]]:
-    """{código do município: centro aproximado} para todo o estado."""
+
     async def _baixar() -> dict[int, dict[str, float]]:
         malha = await malha_uf(uf_id)
         centros: dict[int, dict[str, float]] = {}
@@ -459,17 +410,14 @@ async def centros_uf(uf_id: str | int) -> dict[int, dict[str, float]]:
 
     return await CACHE.get_or_set(f"ibge:centros-uf:{uf_id}", TTL_LOCALIDADES, _baixar)
 
-
 async def pib_municipios_uf(uf: str, ano: str = "2023") -> dict[int, float]:
-    """PIB nominal (mil R$) de todos os municípios da UF — base do ranking
-    e das bolhas do mapa."""
+
     munis = [m["id"] for m in await lista_municipios() if m["uf"] == uf]
 
     async def _baixar() -> dict[int, float]:
         passada = 100
         lotes = [munis[i:i + passada] for i in range(0, len(munis), passada)]
 
-        # Dispara todas as fatias de 100 municípios em paralelo
         tarefas = [sidra(TAB_PIB, lote, var=str(VAR_PIB), periodo=ano) for lote in lotes]
         respostas = await asyncio.gather(*tarefas)
 
@@ -484,19 +432,16 @@ async def pib_municipios_uf(uf: str, ano: str = "2023") -> dict[int, float]:
 
     return await CACHE.get_or_set(f"sidra:pib-uf:{uf}:{ano}", TTL_SIDRA, _baixar)
 
-
 async def pib_rank_uf(id_mun: int, uf: str, ano: str = "2023") -> tuple[int | None, int | None]:
-    """Posição do município no PIB do próprio estado (1 = maior)."""
+
     valores = await pib_municipios_uf(uf, ano)
     if id_mun not in valores or not valores:
         return (None, None)
     ordenado = sorted(valores.values(), reverse=True)
     return (ordenado.index(valores[id_mun]) + 1, len(valores))
 
-
 async def participacao_pib(id_mun: int) -> dict[str, Any]:
-    """Participação percentual do município no PIB estadual (UF) e nacional (Brasil).
-    Tabela 5938 (Variáveis 497 e 496)."""
+
     async def _baixar() -> dict[str, Any]:
         vars_str = f"{VAR_PIB_PART_UF},{VAR_PIB_PART_BR}"
         header, linhas = await sidra(TAB_PIB, id_mun, var=vars_str, periodo="last")

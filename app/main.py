@@ -1,8 +1,3 @@
-"""Radar de Oportunidades Regionais — servidor FastAPI.
-
-REST  (IBGE)  → território, população, PIB, empresas (SIDRA).
-SOAP  (BCB)   → IPCA, Selic, câmbio (FachadaWSSGS via zeep).
-"""
 from __future__ import annotations
 
 import asyncio
@@ -25,10 +20,9 @@ from app.services import bcb, ibge, monitor
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 _log = logging.getLogger("radar.main")
 
-
 async def _aquecer_cache():
-    """Pré-aquecimento assíncrono em segundo plano dos dados gerais e cidades em destaque."""
-    await asyncio.sleep(0.5)  # Breve pausa para o uvicorn subir 100%
+
+    await asyncio.sleep(0.5)
     try:
         _log.info("Pré-aquecendo catálogo de municípios e contexto financeiro...")
         await asyncio.gather(
@@ -47,23 +41,20 @@ async def _aquecer_cache():
     except Exception as erro:
         _log.warning(f"Erro no pré-aquecimento geral: {erro}")
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Dispara a tarefa em background sem segurar a subida do servidor
+
     tarefa = asyncio.create_task(_aquecer_cache())
     yield
     tarefa.cancel()
 
-
 class StaticFilesComCache(StaticFiles):
-    """Serve arquivos estáticos com cabeçalho de cache agressivo (7 dias)."""
+
     def file_response(self, *args, **kwargs):
         response = super().file_response(*args, **kwargs)
-        # 7 dias de cache no cliente para CSS, JS e imagens
+
         response.headers["Cache-Control"] = "public, max-age=604800, immutable"
         return response
-
 
 app = FastAPI(
     title="Radar de Oportunidades Regionais",
@@ -76,7 +67,6 @@ app.mount("/static", StaticFilesComCache(directory=_AQUI / "ui" / "static"), nam
 templates = Jinja2Templates(directory=_AQUI / "ui" / "templates")
 templates.env.globals["ano_atual"] = lambda: dt.date.today().year
 
-# Municípios de atalho da página inicial
 ATALHOS = [
     (3143302, "Montes Claros", "MG"),
     (3550308, "São Paulo", "SP"), (3304557, "Rio de Janeiro", "RJ"),
@@ -84,10 +74,6 @@ ATALHOS = [
     (2611606, "Recife", "PE"), (2304400, "Fortaleza", "CE"),
     (1302603, "Manaus", "AM"),
 ]
-
-# ------------------------------------------------------------------
-# Formatação pt-BR nos templates
-# ------------------------------------------------------------------
 
 def _presente(v: Any) -> bool:
     return v is not None
@@ -109,7 +95,7 @@ def _fmt_num(v: Any, dec: int = 0) -> str:
         return "—"
 
 def _fmt_pib(v: Any) -> str:
-    """v em mil de reais (SIDRA) → 'R$ 418,5 bi' / 'R$ 312 mi'."""
+
     if not _presente(v):
         return "—"
     reais = float(v) * 1000
@@ -134,17 +120,9 @@ templates.env.filters["pct"] = _fmt_pct
 def _render(request: Request, nome: str, ctx: dict[str, Any], status: int = 200) -> HTMLResponse:
     return templates.TemplateResponse(request, nome, ctx, status_code=status)
 
-# ------------------------------------------------------------------
-# Página inicial
-# ------------------------------------------------------------------
-
 @app.get("/", response_class=HTMLResponse)
 async def pagina_inicial(request: Request) -> HTMLResponse:
     return _render(request, "index.html", {"atalhos": ATALHOS})
-
-# ------------------------------------------------------------------
-# APIs de suporte (autocomplete e diagnóstico)
-# ------------------------------------------------------------------
 
 @app.get("/api/localidades")
 async def api_localidades(q: str = Query("")) -> JSONResponse:
@@ -152,7 +130,7 @@ async def api_localidades(q: str = Query("")) -> JSONResponse:
 
 @app.get("/api/diagnostico")
 async def api_diagnostico() -> JSONResponse:
-    """Observabilidade das integrações: o SOAP do BCB está vivo?"""
+
     return JSONResponse({
         "bcb_soap": await bcb.status(),
         "bcb_reserva_rest": True,
@@ -161,28 +139,24 @@ async def api_diagnostico() -> JSONResponse:
 
 @app.get("/health")
 async def health() -> JSONResponse:
-    """Alias simples do diagnóstico (polling de monitoramento)."""
+
     return await api_diagnostico()
 
 @app.get("/api/malha/brasil")
 async def api_malha_brasil() -> JSONResponse:
-    """GeoJSON oficial do Brasil por UF (IBGE Malhas) — para o mapa ECharts."""
+
     return JSONResponse(await ibge.malha_brasil())
 
 @app.get("/api/monitor")
 async def api_monitor() -> JSONResponse:
-    """Inspecionar integrações: as últimas requisições REST/SOAP registradas."""
-    return JSONResponse({"eventos": monitor.ultimos()})
 
-# ------------------------------------------------------------------
-# Painel do município
-# ------------------------------------------------------------------
+    return JSONResponse({"eventos": monitor.ultimos()})
 
 def _grafia_data(iso: str) -> str:
     return f"{iso[8:10]}/{iso[5:7]}/{iso[:4]}" if len(iso) == 10 else ""
 
 def _contexto_resumo(contexto: dict[str, Any]) -> list[dict[str, str]]:
-    """Mini-cards nacionais alimentados pelo SOAP do BCB."""
+
     saida: list[dict[str, str]] = []
     rotulos = {
         "ipca_12m":         ("IPCA 12 meses · BCB", "pct2"),
@@ -208,7 +182,7 @@ def _contexto_resumo(contexto: dict[str, Any]) -> list[dict[str, str]]:
     return saida
 
 def _payload_graficos(dados: dict[str, Any]) -> dict[str, Any]:
-    """Conjuntos que o ECharts renderiza na página do município."""
+
     pop = dados["pop_serie"]
     pib_nom = dados["pib_serie"]["nominal"]
     pib_real: dict[int, float] = dict(dados["pib_serie"]["real"])
@@ -218,7 +192,7 @@ def _payload_graficos(dados: dict[str, Any]) -> dict[str, Any]:
     inad_pj = dados["contexto"].get("inadimplencia_pj", {}).get("pontos", [])[-24:]
 
     def rotulo(iso: str) -> str:
-        return iso[5:7] + "/" + iso[2:4]  # "07/24"
+        return iso[5:7] + "/" + iso[2:4]
 
     return {
         "pop": {"anos": [a for a, _ in pop], "valores": [v for _, v in pop]},
@@ -259,10 +233,6 @@ async def pagina_municipio(request: Request, id_mun: int) -> HTMLResponse:
         "payload": json.dumps(_payload_graficos(dados), ensure_ascii=False),
         "contexto": _contexto_resumo(dados["contexto"]),
     })
-
-# ------------------------------------------------------------------
-# Comparador de municípios
-# ------------------------------------------------------------------
 
 def _valor_em(d: dict[str, Any], *caminho: str) -> Any:
     t: Any = d["indicators"]

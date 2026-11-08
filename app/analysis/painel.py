@@ -1,7 +1,3 @@
-"""Monta o objeto completo de cada visão (município / comparador).
-
-Coordena REST (IBGE) e SOAP (BCB) e devolve já com indicadores e insights.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -12,8 +8,7 @@ from app.analysis import insights
 from app.analysis.indicators import Deflator, painel_indicadores
 from app.services.cache import CACHE
 
-TTL_PAINEL = 3600  # 1 h
-
+TTL_PAINEL = 3600
 
 async def dados_municipio(id_mun: int) -> dict[str, Any]:
     async def _montar() -> dict[str, Any]:
@@ -21,7 +16,6 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
         if muni is None:
             raise KeyError(f"Município {id_mun} não encontrado no IBGE")
 
-        # Disparo paralelo (asyncio.gather) de todas as integrações REST e SOAP
         tarefas = [
             bcb.contexto_financeiro(anos=26),
             ibge.serie_populacao(id_mun),
@@ -34,7 +28,6 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
             ibge.metadados_territoriais(id_mun),
         ]
 
-        # Se tiver UF, dispara também os dados do mapa em paralelo
         tem_mapa = bool(muni.get("uf_id") and muni.get("uf"))
         if tem_mapa:
             tarefas.extend([
@@ -57,7 +50,6 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
 
         deflator = Deflator(contexto["ipca"]["pontos"])
 
-        # Processa dados do mapa de vizinhos a partir dos resultados já baixados
         vizinhos: list[dict[str, Any]] = []
         bbox: dict[str, float] | None = None
         if tem_mapa and len(resultados) >= 12:
@@ -107,7 +99,6 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
         return dados
 
     return await CACHE.get_or_set(f"painel:{id_mun}", TTL_PAINEL, _montar)
-
 
 async def dados_comparador(ids: list[int]) -> list[dict[str, Any]]:
     return list(await asyncio.gather(*(dados_municipio(i) for i in ids)))

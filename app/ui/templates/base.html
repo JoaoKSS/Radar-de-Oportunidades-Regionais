@@ -39,7 +39,6 @@
         <span>Radar de Oportunidades <strong>Regionais</strong></span>
       </a>
 
-      <!-- Menu -->
       <nav class="menu-desktop">
         <a href="/" class="{% if request.url.path == '/' or request.url.path.startswith('/municipio') %}ativo{% endif %}">Início</a>
         <a href="/comparar" class="{% if request.url.path.startswith('/comparar') %}ativo{% endif %}">Comparar</a>
@@ -81,7 +80,7 @@
   <footer class="rodape">
     <div class="rodape-corpo">
       <div class="rodape-grid">
-        <!-- Coluna 1: Branding -->
+
         <div class="rodape-col rodape-brand">
           <a class="marca-rodape" href="/">
             <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
@@ -96,7 +95,6 @@
           </p>
         </div>
 
-        <!-- Coluna 2: Navegação -->
         <div class="rodape-col">
           <h4 class="rodape-titulo">Navegação</h4>
           <ul class="rodape-links">
@@ -106,7 +104,6 @@
           </ul>
         </div>
 
-        <!-- Coluna 3: Integrações Técnicas -->
         <div class="rodape-col">
           <h4 class="rodape-titulo">Integrações de Dados</h4>
           <ul class="rodape-links">
@@ -131,7 +128,6 @@
           </ul>
         </div>
 
-        <!-- Coluna 4: Governança e Metodologia -->
         <div class="rodape-col">
           <h4 class="rodape-titulo">Metodologia</h4>
           <p class="rodape-texto-metodologia">
@@ -143,7 +139,6 @@
         </div>
       </div>
 
-      <!-- Barra Inferior (Sub-footer) -->
       <div class="rodape-sub">
         <div class="rodape-copy">
           &copy; {{ ano_atual() }} Radar de Oportunidades Regionais &middot; Dados abertos do Brasil

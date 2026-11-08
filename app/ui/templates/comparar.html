@@ -3,13 +3,12 @@
 
 {% block corpo %}
 <div class="comparador-painel">
-  <!-- Cabeçalho do módulo -->
+
   <section class="comparador-hero">
     <h1>Comparação Direta de Municípios</h1>
     <p>Adicione de 2 a 4 municípios para confrontar indicadores de demanda populacional, dinâmica da economia real e concorrência comercial.</p>
   </section>
 
-  <!-- Seletor em card estilo console / barra de benchmarking -->
   <section class="seletor-card" data-comparador>
     <div class="seletor-linha">
       <div class="busca-wrap busca">
@@ -25,7 +24,6 @@
       </button>
     </div>
 
-    <!-- Cidades selecionadas no benchmark -->
     <div class="slots-container">
       <span class="slots-rotulo">Municípios selecionados:</span>
       <div class="pilhas" id="pilhas">
@@ -52,7 +50,7 @@
 
   {% if tabela %}
   {% if contexto %}
-  <!-- Régua de Referência Macroeconômica (SOAP SGS / BCB) -->
+
   <section class="comp-contexto-macro">
     <div class="comp-cab-secao" style="margin-bottom: 10px;">
       <h2>Régua Macroeconômica de Referência (SOAP · Banco Central)</h2>
@@ -70,7 +68,6 @@
   </section>
   {% endif %}
 
-  <!-- Matriz de Indicadores Comparativa -->
   <section class="comp-matriz-secao">
     <div class="comp-cab-secao">
       <h2>Matriz de Indicadores Comparativos</h2>
@@ -107,7 +104,6 @@
     </div>
   </section>
 
-  <!-- Gráficos Comparativos Lado a Lado -->
   <section class="comp-graficos-grid">
     <div class="card-grafico">
       <div class="grafico-topo">
@@ -135,7 +131,7 @@
   </section>
 
   {% else %}
-  <!-- Empty State Elegante -->
+
   <div class="empty-state-comparar">
     <div class="empty-icone">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">

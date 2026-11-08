@@ -1,9 +1,3 @@
-"""Pontos de atenção — heurísticas orientadas a tipos de empreendimento.
-
-Cada insight tem uma tag visual ('positiva' | 'cuidado' | 'risco') e um
-texto claro. Nada aqui é oráculo: são sinais para investigar antes de
-investir.
-"""
 from __future__ import annotations
 
 from typing import Any
@@ -12,9 +6,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
     ind = dados["indicators"]
     insights: list[dict[str, str]] = []
 
-    # ------------------------------------------------------------------
-    # Demografia — demanda presente e futura
-    # ------------------------------------------------------------------
     pop = ind["populacao"]
     cresc = pop["cresc_5a"]
     if cresc is None:
@@ -46,9 +37,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
             "texto": "População estabilizada. Mercado com pouca tração de novos entrantes por volume; diferenciação e retenção são prioritárias."
         })
 
-    # ------------------------------------------------------------------
-    # Economia real (PIB deflacionado pelo IPCA)
-    # ------------------------------------------------------------------
     pib = ind["pib"]
     cresc_real = pib["cresc_real_5a"]
     if cresc_real is None:
@@ -80,9 +68,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
             "texto": "Atividade econômica estagnada no quinquênio. Crescimento viável principalmente por captura de fatia de mercado existente."
         })
 
-    # ------------------------------------------------------------------
-    # Saturação de mercado — empresas por mil habitantes
-    # ------------------------------------------------------------------
     emp = ind["empresas"]
     if emp["por_mil_hab"] is not None:
         if emp["por_mil_hab"] >= 40:
@@ -107,9 +92,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Densidade competitiva em nível mediano. Estratégia viável desde que amparada em pesquisa setorial de gargalos locais."
             })
 
-    # ------------------------------------------------------------------
-    # Intensidade de mão de obra
-    # ------------------------------------------------------------------
     if emp["empregos_por_empresa"] is not None:
         if emp["empregos_por_empresa"] > 8:
             insights.append({
@@ -126,9 +108,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Prevalência acentuada de microempresas e autônomos. Contratações com qualificação técnica exigirão recrutamento especializado."
             })
 
-    # ------------------------------------------------------------------
-    # Poder de Compra / Renda Média (CEMPRE)
-    # ------------------------------------------------------------------
     salario_medio = emp.get("salario_medio")
     if salario_medio is not None:
         if salario_medio >= 3500:
@@ -146,9 +125,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Renda média formal mais sensível a preço. Modelos de negócio de desconto, atacarejo e consumo essencial apresentam maior aderência."
             })
 
-    # ------------------------------------------------------------------
-    # Vocação Econômica (VAB Setorial do PIB)
-    # ------------------------------------------------------------------
     vab = dados.get("vab_setorial") or {}
     pcts = vab.get("participacao_pct") or {}
     if pcts:
@@ -186,12 +162,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Elevada dependência do setor público e transferências governamentais. Mercado privado autônomo restrito a orçamentos municipais."
             })
 
-    # ------------------------------------------------------------------
-    # Posição na economia estadual
-    # ------------------------------------------------------------------
-    # ------------------------------------------------------------------
-    # Posição na economia estadual e nacional (Participação no PIB)
-    # ------------------------------------------------------------------
     part_pib = dados.get("participacao_pib") or {}
     part_uf = part_pib.get("part_uf")
     part_br = part_pib.get("part_br")
@@ -236,9 +206,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Posicionamento no quartil inferior do PIB estadual. Atenção a limitações de infraestrutura viária e fluxo local de capital."
             })
 
-    # ------------------------------------------------------------------
-    # Contexto financeiro nacional (SOAP do Banco Central)
-    # ------------------------------------------------------------------
     contexto = dados.get("contexto", {})
     ipca12 = contexto.get("ipca_12m")
     if ipca12 and ipca12.get("pontos"):
@@ -268,7 +235,6 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "texto": "Custo de capital e taxas de crédito elevados. Desestimula alavancagem excessiva; favorece projetos com baixo investimento inicial."
             })
 
-    # Inadimplência e Crédito Empresarial (SOAP BCB)
     inadimplencia = contexto.get("inadimplencia_pj")
     if inadimplencia and inadimplencia.get("pontos"):
         taxa_inad = inadimplencia["pontos"][-1]["valor"]

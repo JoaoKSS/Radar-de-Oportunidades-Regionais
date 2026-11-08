@@ -1,9 +1,3 @@
-"""Ponto de entrada: python run.py [porta]  →  http://127.0.0.1:8000
-
-* Se as dependências não estiverem instaladas no Python atual, reexecuta
-  automaticamente com o interpretador do .venv local.
-* Se a porta já estiver ocupada, avisa com clareza em vez de stack trace.
-"""
 import os
 import socket
 import sys
@@ -11,10 +5,9 @@ from pathlib import Path
 
 PORTA_PADRAO = 8000
 
-
 def _garanta_venv() -> None:
     try:
-        import uvicorn  # noqa: F401
+        import uvicorn
     except ModuleNotFoundError:
         venv_python = (Path(__file__).resolve().parent / ".venv" / "bin" / "python").resolve()
         if venv_python.exists() and Path(sys.executable).resolve() != venv_python:
@@ -25,7 +18,6 @@ def _garanta_venv() -> None:
         )
         raise SystemExit(1)
 
-
 def _porta() -> int:
     if len(sys.argv) > 1:
         try:
@@ -35,10 +27,9 @@ def _porta() -> int:
             raise SystemExit(1)
     return PORTA_PADRAO
 
-
 def _porta_livre(porta: int) -> bool:
     s = socket.socket()
-    # SO_REUSEADDR evita falso positivo por TIME_WAIT de conexões recentes
+
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
         s.bind(("127.0.0.1", porta))
@@ -48,10 +39,9 @@ def _porta_livre(porta: int) -> bool:
     finally:
         s.close()
 
-
 _garanta_venv()
 
-import uvicorn  # noqa: E402
+import uvicorn
 
 if __name__ == "__main__":
     porta = _porta()

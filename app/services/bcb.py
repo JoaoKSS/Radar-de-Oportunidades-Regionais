@@ -1,15 +1,3 @@
-"""Integração SOAP — FachadaWSSGS do Banco Central (Sistema SGS).
-
-Por que envelope construído à mão?
-  1. O WSDL do serviço foi gerado pelo Apache Axis 1.2 (2005) com
-     rpc/encoded e ``soapenc:Array`` sem modelo de conteúdo — serializers
-     automáticos (zeep) quebram nesse formato.
-  2. A resposta usa referências ``multiRef`` recorrentes (id/href),
-     inclusive dentro dos VOs — resolvida aqui por um walker recursivo.
-
-Reserva: se o endpoint SOAP estiver indisponível, degrada para a API REST
-legada do SGS (mesma base, outro protocolo), marcando a fonte usada.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -35,12 +23,8 @@ NS_XSI = "http://www.w3.org/2001/XMLSchema-instance"
 
 _soap_ok: bool | None = None
 
-# ------------------------------------------------------------------
-# Camada de protocolo
-# ------------------------------------------------------------------
-
 def _estilizar_xml(xml: str) -> str:
-    """Reindenta o XML para leitura; volta o texto cru se não der."""
+
     try:
         return etree.tostring(etree.fromstring(xml), pretty_print=True).decode()
     except Exception:
@@ -56,10 +40,7 @@ def _cabecalho(metodo: str, corpo: str) -> str:
     )
 
 async def _chamar(metodo: str, corpo: str) -> tuple[Any, Any]:
-    """Envia o envelope e devolve (Envelope, elemento *Response).
 
-    Toda a ida e volta é registrada no monitor de integrações.
-    """
     envelope = _cabecalho(metodo, corpo)
     enviado = _estilizar_xml(envelope)
     ini = time.perf_counter()
@@ -111,12 +92,7 @@ def _montar_mapa(raiz: Any) -> dict[str, Any]:
     return {mr.get("id", ""): mr for mr in raiz.iter("multiRef")}
 
 def _alvo(e: Any, refs: dict[str, Any], vistos: frozenset = frozenset()) -> Any:
-    """Walker rpc/encoded: traduz o grafo multiRef em estruturas Python.
 
-    * xsd:*/soapenc:escalar com texto  → string
-    * xsi:type *Array / <item>…        → lista
-    * VO (WSSerieVO etc.)              → dict de campos
-    """
     xsi = (e.get(f"{{{NS_XSI}}}type") or "")
     nome_tipo = xsi.rsplit(":", 1)[-1]
     texto = (e.text or "").strip()
@@ -162,7 +138,7 @@ def _alvo(e: Any, refs: dict[str, Any], vistos: frozenset = frozenset()) -> Any:
         elif ch.get(f"{{{NS_XSI}}}nil") == "true":
             registro[tag] = None
         else:
-            # filho sem href: recursão uniforme (texto simples, VO ou array embedado)
+
             registro[tag] = _alvo(ch, refs, vistos)
     return registro
 
@@ -174,10 +150,6 @@ def _retorna(raiz: Any, resposta: Any, nome: str) -> Any:
             alvo = refs.get(href[1:]) if href else ch
             return _alvo(alvo, refs) if alvo is not None else None
     return None
-
-# ------------------------------------------------------------------
-# Fachada de alto nível
-# ------------------------------------------------------------------
 
 def _ponto(vo: Any) -> dict[str, Any] | None:
     try:
@@ -212,7 +184,7 @@ async def _series_vo(codigos: list[int], inicio: dt.date, fim: dt.date) -> list[
         raiz, resposta = await _chamar("getValoresSeriesVO", corpo)
     except RuntimeError as erro:
         if "Value(s) not found" in str(erro):
-            return [[] for _ in codigos]  # sem dados no intervalo — estado normal
+            return [[] for _ in codigos]
         raise
     ret = _retorna(raiz, resposta, "getValoresSeriesVOReturn")
     lista = ret if isinstance(ret, list) else []
@@ -225,7 +197,7 @@ async def _series_vo(codigos: list[int], inicio: dt.date, fim: dt.date) -> list[
     return saida
 
 async def status() -> bool:
-    """SOAP do BCB está operacional? (testa uma vez por processo)"""
+
     global _soap_ok
     if _soap_ok is None:
         try:
@@ -237,12 +209,8 @@ async def status() -> bool:
             _log.warning("SOAP indisponível; reserva REST acionada: %s", erro)
     return _soap_ok
 
-# ------------------------------------------------------------------
-# Negócio — SOAP primeiro, REST como reserva
-# ------------------------------------------------------------------
-
 async def serie_sgs(serie: int, inicio: dt.date, fim: dt.date) -> dict[str, Any]:
-    """Série histórica do SGS, ponto a ponto, com marcação da fonte."""
+
     fonte = "SOAP"
     dados: list[dict[str, Any]] = []
     try:
@@ -261,7 +229,7 @@ async def serie_sgs(serie: int, inicio: dt.date, fim: dt.date) -> dict[str, Any]
     return {"serie": serie, "fonte": fonte, "pontos": dados}
 
 async def _serie_rest(serie: int, inicio: dt.date, fim: dt.date) -> list[dict[str, Any]]:
-    """Reserva REST do SGS — intervalos longos divididos em blocos seguros."""
+
     url = BCB_REST_FALLBACK.format(serie=serie)
     tudo: dict[str, float] = {}
     cursor = inicio
@@ -282,24 +250,18 @@ async def _serie_rest(serie: int, inicio: dt.date, fim: dt.date) -> list[dict[st
     return [{"data": k, "valor": v} for k, v in sorted(tudo.items())]
 
 async def contexto_financeiro(anos: int = 10) -> dict[str, Any]:
-    """Séries relevantes ao empreendedor (IPCA, Selic, câmbio, IPCA 12m, crédito).
 
-    O IPCA mensal usa ``anos=26`` para deflacionar o PIB histórico desde 1999.
-    Séries diárias como Selic e Câmbio usam intervalos recentes (1 ano) para não
-    trafegar dezenas de milhares de registros diários desnecessários via SOAP.
-    """
     hoje = dt.date.today()
     inicio_longo = hoje.replace(year=hoje.year - anos)
     inicio_recente = hoje.replace(year=hoje.year - 1)
 
-    # Dicionário de intervalo adequado para cada indicador
     alcance = {
-        "ipca": inicio_longo,        # série mensal necessária para deflacionar o PIB
-        "ipca_12m": inicio_recente,  # série mensal de 1 ano para o gráfico
-        "selic": inicio_recente,     # série diária: último ano tem ~250 pontos (em vez de 9.500)
-        "cambio": inicio_recente,    # série diária: último ano tem ~250 pontos (em vez de 6.500)
-        "inadimplencia_pj": inicio_longo, # série mensal leve
-        "juros_giro": inicio_longo,       # série mensal leve
+        "ipca": inicio_longo,
+        "ipca_12m": inicio_recente,
+        "selic": inicio_recente,
+        "cambio": inicio_recente,
+        "inadimplencia_pj": inicio_longo,
+        "juros_giro": inicio_longo,
     }
 
     async def _obter(nome: str, cod: int) -> tuple[str, dict[str, Any]]:
