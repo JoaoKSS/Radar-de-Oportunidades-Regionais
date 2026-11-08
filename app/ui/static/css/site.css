@@ -814,7 +814,9 @@ a:hover {
   text-decoration: none;
   transition: all 0.15s ease;
 }
-.sugestoes a:hover {
+.sugestoes a:hover,
+.sugestoes a.ativo,
+.sugestoes li.selecionado a {
   background: var(--acento-suave);
   color: var(--acento-escuro);
   text-decoration: none;
@@ -829,7 +831,9 @@ a:hover {
   padding: 2px 7px;
   border-radius: 4px;
 }
-.sugestoes a:hover .uf {
+.sugestoes a:hover .uf,
+.sugestoes a.ativo .uf,
+.sugestoes li.selecionado a .uf {
   background: #ffffff;
   border-color: var(--acento-borda);
   color: var(--acento-escuro);

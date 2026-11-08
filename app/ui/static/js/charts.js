@@ -723,15 +723,59 @@
       li.append(a); sugestoes.append(li);
     }
 
+    var indiceAtivo = -1;
+
+    function destacarItem(novoIndice) {
+      var itens = sugestoes.querySelectorAll('li a');
+      if (!itens.length) {
+        indiceAtivo = -1;
+        return;
+      }
+      if (novoIndice < 0) {
+        novoIndice = itens.length - 1;
+      } else if (novoIndice >= itens.length) {
+        novoIndice = 0;
+      }
+      itens.forEach(function (el, idx) {
+        var ativo = idx === novoIndice;
+        el.classList.toggle('ativo', ativo);
+        if (ativo) {
+          el.scrollIntoView({ block: 'nearest' });
+        }
+      });
+      indiceAtivo = novoIndice;
+    }
+
+    entrada.addEventListener('keydown', function (ev) {
+      if (sugestoes.hidden) return;
+      var itens = sugestoes.querySelectorAll('li a');
+      if (!itens.length) return;
+
+      if (ev.key === 'ArrowDown') {
+        ev.preventDefault();
+        destacarItem(indiceAtivo + 1);
+      } else if (ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        destacarItem(indiceAtivo - 1);
+      } else if (ev.key === 'Enter') {
+        if (indiceAtivo >= 0 && indiceAtivo < itens.length) {
+          ev.preventDefault();
+          itens[indiceAtivo].click();
+        }
+      }
+    });
+
     entrada.addEventListener('input', function () {
       var q = entrada.value.trim();
       clearTimeout(timer);
+      indiceAtivo = -1;
       if (q.length < 2) { sugestoes.hidden = true; return; }
       timer = setTimeout(async function () {
         try {
           var r = await fetch('/api/localidades?q=' + encodeURIComponent(q));
           var jr = await r.json();
           sugestoes.innerHTML = '';
+          indiceAtivo = -1;
           if (!jr.length) { sugestoes.hidden = true; return; }
           jr.slice(0, 9).forEach(function (m) { abrir(m.nome, m.id, m.uf); });
           sugestoes.hidden = false;
