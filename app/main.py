@@ -60,15 +60,6 @@ class StaticFilesComCache(StaticFiles):
     """Serve arquivos estáticos com cabeçalho de cache agressivo (7 dias)."""
     def file_response(self, *args, **kwargs):
         response = super().file_response(*args, **kwargs)
-        # 7 dias de cache no cliente
-        response.headers["Cache-Control"] = "public, max-age=604800, immutable"
-        return response
-
-
-class StaticFilesComCache(StaticFiles):
-    """Serve arquivos estáticos com cabeçalho de cache agressivo (7 dias)."""
-    def file_response(self, *args, **kwargs):
-        response = super().file_response(*args, **kwargs)
         # 7 dias de cache no cliente para CSS, JS e imagens
         response.headers["Cache-Control"] = "public, max-age=604800, immutable"
         return response
