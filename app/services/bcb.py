@@ -12,6 +12,7 @@ legada do SGS (mesma base, outro protocolo), marcando a fonte usada.
 """
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import logging
 import time
@@ -281,23 +282,35 @@ async def _serie_rest(serie: int, inicio: dt.date, fim: dt.date) -> list[dict[st
     return [{"data": k, "valor": v} for k, v in sorted(tudo.items())]
 
 async def contexto_financeiro(anos: int = 10) -> dict[str, Any]:
-    """Séries relevantes ao empreendedor (IPCA, Selic, câmbio, IPCA 12m).
+    """Séries relevantes ao empreendedor (IPCA, Selic, câmbio, IPCA 12m, crédito).
 
-    ``anos=26`` cobre todo o alcance do PIB municipal do SIDRA
-    (deflacionamento de valores nominais).
+    O IPCA mensal usa ``anos=26`` para deflacionar o PIB histórico desde 1999.
+    Séries diárias como Selic e Câmbio usam intervalos recentes (1 ano) para não
+    trafegar dezenas de milhares de registros diários desnecessários via SOAP.
     """
     hoje = dt.date.today()
-    inicio = hoje.replace(year=hoje.year - anos)
-    saida: dict[str, Any] = {}
-    for nome, cod in SERIES_BCB.items():
-        if nome == "ipca_12m":
-            continue
-        saida[nome] = await CACHE.get_or_set(
-            f"bcb:{nome}:{anos}", TTL_BCB,
-            lambda c=cod, i=inicio, f=hoje: serie_sgs(c, i, f),
+    inicio_longo = hoje.replace(year=hoje.year - anos)
+    inicio_recente = hoje.replace(year=hoje.year - 1)
+
+    # Dicionário de intervalo adequado para cada indicador
+    alcance = {
+        "ipca": inicio_longo,        # série mensal necessária para deflacionar o PIB
+        "ipca_12m": inicio_recente,  # série mensal de 1 ano para o gráfico
+        "selic": inicio_recente,     # série diária: último ano tem ~250 pontos (em vez de 9.500)
+        "cambio": inicio_recente,    # série diária: último ano tem ~250 pontos (em vez de 6.500)
+        "inadimplencia_pj": inicio_longo, # série mensal leve
+        "juros_giro": inicio_longo,       # série mensal leve
+    }
+
+    async def _obter(nome: str, cod: int) -> tuple[str, dict[str, Any]]:
+        ini = alcance.get(nome, inicio_recente)
+        ttl = TTL_BCB
+        res = await CACHE.get_or_set(
+            f"bcb:{nome}:{ini.year}", ttl,
+            lambda: serie_sgs(cod, ini, hoje),
         )
-    saida["ipca_12m"] = await CACHE.get_or_set(
-        "bcb:ipca_12m", TTL_BCB,
-        lambda: serie_sgs(SERIES_BCB["ipca_12m"], hoje.replace(year=hoje.year - 1), hoje),
-    )
-    return saida
+        return nome, res
+
+    tarefas = [_obter(nome, cod) for nome, cod in SERIES_BCB.items()]
+    pares = await asyncio.gather(*tarefas)
+    return dict(pares)

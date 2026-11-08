@@ -10,6 +10,7 @@ posição.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import time
@@ -461,10 +462,15 @@ async def pib_municipios_uf(uf: str, ano: str = "2023") -> dict[int, float]:
     munis = [m["id"] for m in await lista_municipios() if m["uf"] == uf]
 
     async def _baixar() -> dict[int, float]:
-        valores: dict[int, float] = {}
         passada = 100
-        for i in range(0, len(munis), passada):
-            _, linhas = await sidra(TAB_PIB, munis[i:i + passada], var=str(VAR_PIB), periodo=ano)
+        lotes = [munis[i:i + passada] for i in range(0, len(munis), passada)]
+
+        # Dispara todas as fatias de 100 municípios em paralelo
+        tarefas = [sidra(TAB_PIB, lote, var=str(VAR_PIB), periodo=ano) for lote in lotes]
+        respostas = await asyncio.gather(*tarefas)
+
+        valores: dict[int, float] = {}
+        for _, linhas in respostas:
             for r in linhas:
                 val = _num(r.get("V"))
                 idc = r.get("D1C")
