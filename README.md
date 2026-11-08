@@ -12,6 +12,29 @@ python3 -m venv .venv
 .venv/bin/python run.py          # http://127.0.0.1:8000
 ```
 
+## Interface do Sistema
+
+### 1. Painel do Município — Indicadores Gerais e Evolução Histórica
+Apresentação dos principais indicadores econômicos, evolução demográfica e crescimento real do PIB municipal deflacionado pelo IPCA.
+
+![Painel do Município - Indicadores e Evolução](assets/tela-municipio-1.png)
+
+### 2. Composição Setorial e Ambiente Macroeconômico
+Detalhamento do Valor Adicionado Bruto (VAB) por setor (Agropecuária, Indústria, Serviços e Administração Pública) integrado aos dados macroeconômicos do Banco Central obtidos via SOAP (Selic, IPCA, juros de capital de giro e taxa de inadimplência PJ).
+
+![Composição Setorial e Crédito](assets/tela-municipio-2.png)
+
+### 3. Diagnóstico Estratégico de Mercado e Mapa Territorial
+Painel de heurísticas automatizadas com classificação por cores (Oportunidade, Atenção e Risco) para orientar decisões de novos negócios, acompanhado da malha geográfica vetorial do estado e destaque do município pesquisado.
+
+![Diagnóstico de Mercado e Mapa Territorial](assets/tela-municipio-3.png)
+
+### 4. Módulo de Comparação e Benchmarking Municipal
+Tela de análise comparativa simultânea (de 2 a 4 municípios) com tabelas de benchmarking, gráficos comparativos de PIB per capita, evolução populacional e estrutura setorial sobreposta.
+
+![Comparativo entre Municípios](assets/tela-comparativo.png)
+
+
 ## Rotas
 
 | Rota | Papel |
@@ -327,7 +350,8 @@ User-Agent: radar-oportunidades/1.0
 .
 ├── run.py                 Ponto de entrada do servidor (valida ambiente e inicia Uvicorn)
 ├── requirements.txt       Dependências do projeto
-├── README.md
+├── README.md              Documentação técnica e guia do sistema
+├── assets/                Capturas de tela da interface do sistema
 └── app/
     ├── main.py            Rotas FastAPI, filtros pt-BR e orquestração de visualizações
     ├── config.py          Endpoints, códigos das séries SGS e TTLs de cache
