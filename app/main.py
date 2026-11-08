@@ -55,6 +55,24 @@ async def lifespan(app: FastAPI):
     tarefa.cancel()
 
 
+class StaticFilesComCache(StaticFiles):
+    """Serve arquivos estáticos com cabeçalho de cache agressivo (7 dias)."""
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        # 7 dias de cache no cliente
+        response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+        return response
+
+
+class StaticFilesComCache(StaticFiles):
+    """Serve arquivos estáticos com cabeçalho de cache agressivo (7 dias)."""
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        # 7 dias de cache no cliente para CSS, JS e imagens
+        response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+        return response
+
+
 app = FastAPI(
     title="Radar de Oportunidades Regionais",
     docs_url=None, redoc_url=None, openapi_url=None,
@@ -62,7 +80,7 @@ app = FastAPI(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 _AQUI = Path(__file__).resolve().parent
-app.mount("/static", StaticFiles(directory=_AQUI / "ui" / "static"), name="static")
+app.mount("/static", StaticFilesComCache(directory=_AQUI / "ui" / "static"), name="static")
 templates = Jinja2Templates(directory=_AQUI / "ui" / "templates")
 
 # Municípios de atalho da página inicial
