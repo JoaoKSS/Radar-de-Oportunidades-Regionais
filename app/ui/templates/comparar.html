@@ -16,6 +16,7 @@
                placeholder="{% if ids | length >= 4 %}Limite de 4 municípios atingido (remova um para trocar){% else %}Buscar e adicionar município (ex.: Recife, Joinville, Campinas...){% endif %}"
                autocomplete="off"
                {% if ids | length >= 4 %}disabled{% endif %}>
+        <span class="atalho-teclado">ESC limpa</span>
         <ul id="busca-sugestoes" class="sugestoes" hidden></ul>
       </div>
       <button class="botao-comparar" id="comparar" disabled>
