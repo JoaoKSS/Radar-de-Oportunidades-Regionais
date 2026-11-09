@@ -301,6 +301,16 @@
     fetch('/api/malha/brasil')
       .then(function (r) { return r.json(); })
       .then(function (malha) {
+        if (R && R.uf && malha.features) {
+          var features = malha.features;
+          var idx = features.findIndex(function (f) {
+            return f.properties && f.properties.name === R.uf;
+          });
+          if (idx >= 0 && idx < features.length - 1) {
+            var ufFeature = features.splice(idx, 1)[0];
+            features.push(ufFeature);
+          }
+        }
         echarts.registerMap('brasil-uf', malha);
         var M = R.mapa || {};
         var viz = M.vizinhos || [];
@@ -323,18 +333,33 @@
             borderColor: '#cbd5e1',
             borderWidth: 0.8,
           },
+          label: {
+            show: true,
+            color: '#94a3b8',
+            fontSize: 10,
+            fontWeight: 500,
+          },
           emphasis: {
             disabled: true,
           },
-          regions: [{
-            name: R.uf,
-            itemStyle: { areaColor: '#ffffff', borderColor: '#0d5f4c', borderWidth: 2 },
-            label: { show: true, color: '#0d5f4c', fontSize: 12, fontWeight: 700 },
-            emphasis: {
-              disabled: true,
+          regions: (function () {
+            var regs = [{
+              name: R.uf,
               itemStyle: { areaColor: '#ffffff', borderColor: '#0d5f4c', borderWidth: 2 },
-            },
-          }],
+              label: { show: true, color: '#0d5f4c', fontSize: 12, fontWeight: 700 },
+              emphasis: {
+                disabled: true,
+                itemStyle: { areaColor: '#ffffff', borderColor: '#0d5f4c', borderWidth: 2 },
+              },
+            }];
+            if (R.uf !== 'DF') {
+              regs.push({
+                name: 'DF',
+                label: { show: false },
+              });
+            }
+            return regs;
+          })(),
         };
         if (M.bbox) {
           var cx = (M.bbox.min_lon + M.bbox.max_lon) / 2;
@@ -349,7 +374,7 @@
         if (viz.length) {
           series.push({
             name: 'Municípios do estado',
-            type: 'scatter', coordinateSystem: 'geo',
+            type: 'scatter', coordinateSystem: 'geo', geoIndex: 0,
             symbolSize: function (val) {
               return 4 + 20 * Math.sqrt((val[2] || 0) / (maxPib || 1));
             },
@@ -368,7 +393,7 @@
           });
         }
         series.push({
-          type: 'effectScatter', coordinateSystem: 'geo',
+          type: 'effectScatter', coordinateSystem: 'geo', geoIndex: 0,
           rippleEffect: { scale: 3.5, brushType: 'stroke', period: 3 },
           symbolSize: 14, zlevel: 4,
           itemStyle: { color: '#be123c', shadowBlur: 8, shadowColor: 'rgba(190, 18, 60, 0.4)' },
