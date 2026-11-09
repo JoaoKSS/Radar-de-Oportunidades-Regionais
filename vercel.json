@@ -1,16 +1,26 @@
 {
   "version": 2,
+  "regions": ["gru1"],
   "builds": [
     {
       "src": "app/main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 60
+      }
     }
   ],
   "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/app/ui/static/$1",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
     {
       "src": "/(.*)",
       "dest": "app/main.py"
     }
   ]
 }
-
