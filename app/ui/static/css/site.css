@@ -1563,19 +1563,14 @@ a:hover {
 }
 
 .comp thead th {
-  position: sticky;
-  top: 58px;
-  z-index: 10;
+  position: static;
   background: rgba(248, 250, 252, 0.98);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   font-size: 12px;
   font-weight: 700;
   color: var(--tinta-fraca);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--borda);
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
 }
 .th-indicador {
   width: 30%;
