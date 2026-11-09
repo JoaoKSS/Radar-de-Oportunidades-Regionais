@@ -44,8 +44,6 @@ VAR_POPULACAO = 9324
 VAR_PIB = 37
 VAR_AREA = 615
 
-API_GEOJSON_BRASIL = "https://raw.githubusercontent.com/luizpedone/municipal-brazilian-geodata/master/data/Brasil.json"
-API_COORDENADAS_MUNICIPIOS = "https://raw.githubusercontent.com/kelvins/Municipios-Brasileiros/main/json/municipios.json"
 VAR_PIB_PART_UF = 497
 VAR_PIB_PART_BR = 496
 

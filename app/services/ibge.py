@@ -10,11 +10,9 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from app.services import monitor
+from app.services import geo, monitor
 
 from app.config import (
-    API_COORDENADAS_MUNICIPIOS,
-    API_GEOJSON_BRASIL,
     SIDRA_MUNICIPIOS_CATALOGO,
     UF_NOMES,
     UF_CODIGOS,
@@ -208,84 +206,10 @@ async def sidra(tabela: int, ids: Any, var: str = "all", periodo: str = "") -> t
     return dados[0], dados[1:]
 
 async def malha_brasil() -> dict[str, Any]:
-
-    async def _baixar() -> dict[str, Any]:
-        try:
-            resp = await _consulta(API_GEOJSON_BRASIL)
-            malha = json.loads(resp.content.decode("utf-8-sig"))
-            for feicao in malha.get("features", []):
-                props = feicao.setdefault("properties", {})
-                props["name"] = props.get("UF") or props.get("codarea", "")
-            return malha
-        except Exception:
-            return {"type": "FeatureCollection", "features": []}
-
-    return await CACHE.get_or_set("ibge:malha-brasil", TTL_LOCALIDADES, _baixar)
-
-def _pontos_da_geometria(geom: dict[str, Any] | None) -> list[tuple[float, float]]:
-    pontos: list[tuple[float, float]] = []
-    if not isinstance(geom, dict):
-        return pontos
-    tipo = geom.get("type")
-    if tipo == "Polygon":
-        for anel in geom.get("coordinates", []):
-            pontos.extend((c[0], c[1]) for c in anel)
-    elif tipo == "MultiPolygon":
-        for poligono in geom.get("coordinates", []):
-            for anel in poligono:
-                pontos.extend((c[0], c[1]) for c in anel)
-    return pontos
-
-def _centroide(geojson: dict[str, Any]) -> dict[str, float] | None:
-
-    pontos: list[tuple[float, float]] = []
-
-    def anda(no: Any) -> None:
-        if isinstance(no, dict):
-            tipo = no.get("type")
-            if tipo == "Polygon" or tipo == "MultiPolygon":
-                pontos.extend(_pontos_da_geometria(no))
-            elif tipo == "Feature":
-                anda(no.get("geometry"))
-            elif tipo == "FeatureCollection":
-                for feicao in no.get("features", []):
-                    anda(feicao)
-
-    anda(geojson)
-    if not pontos:
-        return None
-    return {
-        "lon": round(sum(p[0] for p in pontos) / len(pontos), 4),
-        "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
-    }
-
-async def _coordenadas_municipios_api() -> dict[int, list[float]]:
-    async def _baixar() -> dict[int, list[float]]:
-        try:
-            resp = await _consulta(API_COORDENADAS_MUNICIPIOS)
-            dados = json.loads(resp.content.decode("utf-8-sig"))
-            coords: dict[int, list[float]] = {}
-            for item in dados:
-                cod = item.get("codigo_ibge")
-                lat = item.get("latitude")
-                lon = item.get("longitude")
-                if cod and lat is not None and lon is not None:
-                    coords[int(cod)] = [float(lat), float(lon)]
-            return coords
-        except Exception:
-            return {}
-
-    return await CACHE.get_or_set("api:coordenadas-municipios", TTL_LOCALIDADES, _baixar)
+    return geo.carregar_malha_brasil()
 
 async def centro_municipio(id_mun: int) -> dict[str, float] | None:
-    async def _baixar() -> dict[str, float] | None:
-        coords_map = await _coordenadas_municipios_api()
-        coords = coords_map.get(id_mun)
-        if coords:
-            return {"lat": coords[0], "lon": coords[1]}
-        return None
-
-    return await CACHE.get_or_set(f"ibge:centro:{id_mun}", TTL_LOCALIDADES, _baixar)
+    return geo.obter_coordenada_municipio(id_mun)
 
 async def metadados_territoriais(id_mun: int) -> dict[str, Any]:
 
@@ -401,23 +325,30 @@ async def indicadores_empresas(id_mun: int) -> dict[str, Any]:
     return await CACHE.get_or_set(f"sidra:empresas:{id_mun}", TTL_SIDRA, _baixar)
 
 async def centros_uf(uf_id: str | int) -> dict[int, dict[str, float]]:
-
-    async def _baixar() -> dict[int, dict[str, float]]:
-        coords_map = await _coordenadas_municipios_api()
-        prefixo = str(uf_id)
-        return {
-            cod: {"lat": c[0], "lon": c[1]}
-            for cod, c in coords_map.items()
-            if str(cod).startswith(prefixo)
-        }
-
-    return await CACHE.get_or_set(f"ibge:centros-uf:{uf_id}", TTL_LOCALIDADES, _baixar)
+    return geo.obter_coordenadas_uf(uf_id)
 
 async def pib_municipios_uf(uf: str, ano: str = "2023") -> dict[int, float]:
 
-    munis = [m["id"] for m in await lista_municipios() if m["uf"] == uf]
-
     async def _baixar() -> dict[int, float]:
+        cod_uf = next((k for k, v in UF_CODIGOS.items() if v == uf), None)
+        if cod_uf:
+            url = f"https://apisidra.ibge.gov.br/values/t/{TAB_PIB}/n6/in%20n3%20{cod_uf}/v/{VAR_PIB}/p/{ano}?formato=json"
+            try:
+                resp = await _consulta(url)
+                dados = resp.json()
+                if isinstance(dados, list) and len(dados) > 1:
+                    valores: dict[int, float] = {}
+                    for r in dados[1:]:
+                        val = _num(r.get("V"))
+                        idc = r.get("D1C")
+                        if val is not None and idc and str(idc).isdigit():
+                            valores[int(idc)] = val
+                    if valores:
+                        return valores
+            except Exception:
+                pass
+
+        munis = [m["id"] for m in await lista_municipios() if m["uf"] == uf]
         passada = 100
         lotes = [munis[i:i + passada] for i in range(0, len(munis), passada)]
 
