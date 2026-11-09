@@ -23,7 +23,7 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
             ibge.composicao_setorial_pib(id_mun),
             ibge.participacao_pib(id_mun),
             ibge.indicadores_empresas(id_mun),
-            ibge.pib_rank_uf(id_mun, muni["uf"]) if muni.get("uf") else asyncio.sleep(0, result=(None, None)),
+            ibge.pib_municipios_uf(muni["uf"]) if muni.get("uf") else asyncio.sleep(0, result={}),
             ibge.centro_municipio(id_mun),
             ibge.metadados_territoriais(id_mun),
         ]
@@ -32,7 +32,6 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
         if tem_mapa:
             tarefas.extend([
                 ibge.centros_uf(muni["uf_id"]),
-                ibge.pib_municipios_uf(muni["uf"]),
                 ibge.lista_municipios(),
             ])
 
@@ -44,24 +43,28 @@ async def dados_municipio(id_mun: int) -> dict[str, Any]:
         vab_setorial = resultados[3]
         participacao_pib = resultados[4]
         empresas = resultados[5]
-        rank = resultados[6]
+        pibs_uf = resultados[6] or {}
         geo = resultados[7]
         territorio = resultados[8]
+
+        rank: tuple[int | None, int | None] = (None, None)
+        if id_mun in pibs_uf and pibs_uf:
+            ordenado = sorted(pibs_uf.values(), reverse=True)
+            rank = (ordenado.index(pibs_uf[id_mun]) + 1, len(pibs_uf))
 
         deflator = Deflator(contexto["ipca"]["pontos"])
 
         vizinhos: list[dict[str, Any]] = []
         bbox: dict[str, float] | None = None
-        if tem_mapa and len(resultados) >= 12:
+        if tem_mapa and len(resultados) >= 11:
             try:
                 centros = resultados[9] or {}
-                pibs = resultados[10] or {}
-                todos_munis = resultados[11] or []
+                todos_munis = resultados[10] or []
                 nomes = {m["id"]: m["nome"] for m in todos_munis if m.get("uf") == muni["uf"]}
                 for cod, c in centros.items():
                     if cod == id_mun or not c:
                         continue
-                    pib_v = pibs.get(cod)
+                    pib_v = pibs_uf.get(cod)
                     if not pib_v:
                         continue
                     vizinhos.append({
