@@ -13,7 +13,8 @@ import httpx
 from app.services import monitor
 
 from app.config import (
-    IBGE_LOCALIDADES,
+    SIDRA_MUNICIPIOS_CATALOGO,
+    UF_NOMES,
     MALHA_BRASIL,
     MALHA_ESTADO,
     MALHA_MUNICIPIO,
@@ -100,42 +101,37 @@ async def _consulta(url: str) -> httpx.Response:
         )
         raise
 
+_UF_SIGLA_PARA_ID = {sigla: int(cod) for cod, sigla in UF_CODIGOS.items()}
+
 async def lista_municipios() -> list[dict[str, Any]]:
 
     async def _baixar() -> list[dict[str, Any]]:
-        resp = await _consulta(IBGE_LOCALIDADES)
+        resp = await _consulta(SIDRA_MUNICIPIOS_CATALOGO)
+        linhas = resp.json()
         saida = []
-        for m in resp.json():
-            uf = extrai_uf(m)
-            if uf is None:
+        for r in linhas[1:]:
+            d1c = r.get("D1C")
+            d1n = r.get("D1N", "")
+            if not d1c or not str(d1c).isdigit():
                 continue
+            m = re.search(r"^(.*?)\s*[-–(]\s*([A-Z]{2})\)?$", d1n)
+            if not m:
+                continue
+            nome = m.group(1).strip()
+            uf_sigla = m.group(2).strip()
+            uf_id = _UF_SIGLA_PARA_ID.get(uf_sigla)
+            uf_info = UF_NOMES.get(uf_sigla, (uf_sigla, "Brasil"))
             saida.append({
-                "id": m["id"],
-                "nome": m["nome"],
-                "uf": uf["sigla"],
-                "uf_id": uf["id"],
-                "uf_nome": uf["nome"],
-                "regiao": uf["regiao"]["nome"],
+                "id": int(d1c),
+                "nome": nome,
+                "uf": uf_sigla,
+                "uf_id": uf_id,
+                "uf_nome": uf_info[0],
+                "regiao": uf_info[1],
             })
         return saida
 
     return await CACHE.get_or_set("ibge:municipios", TTL_LOCALIDADES, _baixar)
-
-def extrai_uf(m: dict[str, Any]) -> dict[str, Any] | None:
-
-    for caminho in (
-        ("microrregiao", "mesorregiao", "UF"),
-        ("regiao-imediata", "UF"),
-    ):
-        alvo: Any = m
-        try:
-            for passo in caminho:
-                alvo = alvo[passo]
-            if alvo and "sigla" in alvo:
-                return alvo
-        except (KeyError, TypeError):
-            continue
-    return None
 
 async def busca_municipios(q: str, limite: int = 10) -> list[dict[str, Any]]:
     if not q or not q.strip():
@@ -262,8 +258,11 @@ def _centroide(geojson: dict[str, Any]) -> dict[str, float] | None:
 
 async def centro_municipio(id_mun: int) -> dict[str, float] | None:
     async def _baixar() -> dict[str, float] | None:
-        resp = await _consulta(MALHA_MUNICIPIO.format(id=id_mun))
-        return _centroide(resp.json())
+        try:
+            resp = await _consulta(MALHA_MUNICIPIO.format(id=id_mun))
+            return _centroide(resp.json())
+        except Exception:
+            return None
 
     return await CACHE.get_or_set(f"ibge:centro:{id_mun}", TTL_LOCALIDADES, _baixar)
 
@@ -396,17 +395,20 @@ async def malha_uf(uf_id: str | int) -> dict[str, Any]:
 async def centros_uf(uf_id: str | int) -> dict[int, dict[str, float]]:
 
     async def _baixar() -> dict[int, dict[str, float]]:
-        malha = await malha_uf(uf_id)
-        centros: dict[int, dict[str, float]] = {}
-        for feicao in malha.get("features", []):
-            cod = feicao.get("properties", {}).get("codarea")
-            pontos = _pontos_da_geometria(feicao.get("geometry"))
-            if cod and str(cod).isdigit() and pontos:
-                centros[int(cod)] = {
-                    "lon": round(sum(p[0] for p in pontos) / len(pontos), 4),
-                    "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
-                }
-        return centros
+        try:
+            malha = await malha_uf(uf_id)
+            centros: dict[int, dict[str, float]] = {}
+            for feicao in malha.get("features", []):
+                cod = feicao.get("properties", {}).get("codarea")
+                pontos = _pontos_da_geometria(feicao.get("geometry"))
+                if cod and str(cod).isdigit() and pontos:
+                    centros[int(cod)] = {
+                        "lon": round(sum(p[0] for p in pontos) / len(pontos), 4),
+                        "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
+                    }
+            return centros
+        except Exception:
+            return {}
 
     return await CACHE.get_or_set(f"ibge:centros-uf:{uf_id}", TTL_LOCALIDADES, _baixar)
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-IBGE_LOCALIDADES = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
 IBGE_MALHAS = "https://servicodados.ibge.gov.br/api/v3/malhas"
 
 MALHA_BRASIL = f"{IBGE_MALHAS}/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima"
@@ -15,6 +14,24 @@ UF_CODIGOS = {
     "33": "RJ", "35": "SP", "41": "PR", "42": "SC", "43": "RS", "50": "MS",
     "51": "MT", "52": "GO", "53": "DF",
 }
+
+UF_NOMES = {
+    "RO": ("Rondônia", "Norte"), "AC": ("Acre", "Norte"), "AM": ("Amazonas", "Norte"),
+    "RR": ("Roraima", "Norte"), "PA": ("Pará", "Norte"), "AP": ("Amapá", "Norte"),
+    "TO": ("Tocantins", "Norte"), "MA": ("Maranhão", "Nordeste"), "PI": ("Piauí", "Nordeste"),
+    "CE": ("Ceará", "Nordeste"), "RN": ("Rio Grande do Norte", "Nordeste"),
+    "PB": ("Paraíba", "Nordeste"), "PE": ("Pernambuco", "Nordeste"), "AL": ("Alagoas", "Nordeste"),
+    "SE": ("Sergipe", "Nordeste"), "BA": ("Bahia", "Nordeste"), "MG": ("Minas Gerais", "Sudeste"),
+    "ES": ("Espírito Santo", "Sudeste"), "RJ": ("Rio de Janeiro", "Sudeste"),
+    "SP": ("São Paulo", "Sudeste"), "PR": ("Paraná", "Sul"), "SC": ("Santa Catarina", "Sul"),
+    "RS": ("Rio Grande do Sul", "Sul"), "MS": ("Mato Grosso do Sul", "Centro-Oeste"),
+    "MT": ("Mato Grosso", "Centro-Oeste"), "GO": ("Goiás", "Centro-Oeste"),
+    "DF": ("Distrito Federal", "Centro-Oeste"),
+}
+
+SIDRA_MUNICIPIOS_CATALOGO = (
+    "https://apisidra.ibge.gov.br/values/t/5938/n6/all/v/37/p/last%201?formato=json"
+)
 
 SIDRA_URL = (
     "https://apisidra.ibge.gov.br/values"
