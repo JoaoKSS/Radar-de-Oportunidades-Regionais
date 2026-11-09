@@ -17,10 +17,6 @@ from app.config import (
     API_GEOJSON_BRASIL,
     SIDRA_MUNICIPIOS_CATALOGO,
     UF_NOMES,
-    MALHA_BRASIL,
-    MALHA_ESTADO,
-    MALHA_MUNICIPIO,
-    MALHA_MUNICIPIO_METADADOS,
     UF_CODIGOS,
     SIDRA_URL,
     SIDRA_URL_S_PERIODO,
@@ -215,16 +211,6 @@ async def malha_brasil() -> dict[str, Any]:
 
     async def _baixar() -> dict[str, Any]:
         try:
-            resp = await _consulta(MALHA_BRASIL)
-            malha = resp.json()
-            for feicao in malha.get("features", []):
-                props = feicao.setdefault("properties", {})
-                props["name"] = UF_CODIGOS.get(str(props.get("codarea", "")), props.get("codarea", ""))
-            return malha
-        except Exception:
-            pass
-
-        try:
             resp = await _consulta(API_GEOJSON_BRASIL)
             malha = json.loads(resp.content.decode("utf-8-sig"))
             for feicao in malha.get("features", []):
@@ -293,14 +279,6 @@ async def _coordenadas_municipios_api() -> dict[int, list[float]]:
 
 async def centro_municipio(id_mun: int) -> dict[str, float] | None:
     async def _baixar() -> dict[str, float] | None:
-        try:
-            resp = await _consulta(MALHA_MUNICIPIO.format(id=id_mun))
-            res = _centroide(resp.json())
-            if res:
-                return res
-        except Exception:
-            pass
-
         coords_map = await _coordenadas_municipios_api()
         coords = coords_map.get(id_mun)
         if coords:
@@ -312,22 +290,6 @@ async def centro_municipio(id_mun: int) -> dict[str, float] | None:
 async def metadados_territoriais(id_mun: int) -> dict[str, Any]:
 
     async def _baixar() -> dict[str, Any]:
-        try:
-            resp = await _consulta(MALHA_MUNICIPIO_METADADOS.format(id=id_mun))
-            dados = resp.json()
-            if isinstance(dados, list) and len(dados) > 0:
-                item = dados[0]
-                area_obj = item.get("area") or {}
-                dim = area_obj.get("dimensao")
-                area_km2 = float(dim) if dim else None
-                if area_km2:
-                    return {
-                        "area_km2": area_km2,
-                        "unidade": area_obj.get("unidade", {}).get("id", "km2"),
-                    }
-        except Exception:
-            pass
-
         try:
             _, linhas = await sidra(TAB_AREA, id_mun, var=str(VAR_AREA), periodo="last")
             if linhas:
@@ -438,33 +400,9 @@ async def indicadores_empresas(id_mun: int) -> dict[str, Any]:
 
     return await CACHE.get_or_set(f"sidra:empresas:{id_mun}", TTL_SIDRA, _baixar)
 
-async def malha_uf(uf_id: str | int) -> dict[str, Any]:
-
-    async def _baixar() -> dict[str, Any]:
-        resp = await _consulta(MALHA_ESTADO.format(uf_id=uf_id))
-        return resp.json()
-
-    return await CACHE.get_or_set(f"ibge:malha-uf:{uf_id}", TTL_LOCALIDADES, _baixar)
-
 async def centros_uf(uf_id: str | int) -> dict[int, dict[str, float]]:
 
     async def _baixar() -> dict[int, dict[str, float]]:
-        try:
-            malha = await malha_uf(uf_id)
-            centros: dict[int, dict[str, float]] = {}
-            for feicao in malha.get("features", []):
-                cod = feicao.get("properties", {}).get("codarea")
-                pontos = _pontos_da_geometria(feicao.get("geometry"))
-                if cod and str(cod).isdigit() and pontos:
-                    centros[int(cod)] = {
-                        "lon": round(sum(p[0] for p in pontos) / len(pontos), 4),
-                        "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
-                    }
-            if centros:
-                return centros
-        except Exception:
-            pass
-
         coords_map = await _coordenadas_municipios_api()
         prefixo = str(uf_id)
         return {

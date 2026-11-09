@@ -1,12 +1,5 @@
 from __future__ import annotations
 
-IBGE_MALHAS = "https://servicodados.ibge.gov.br/api/v3/malhas"
-
-MALHA_BRASIL = f"{IBGE_MALHAS}/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima"
-MALHA_MUNICIPIO = f"{IBGE_MALHAS}/municipios/{{id}}?formato=application/vnd.geo+json&qualidade=minima"
-MALHA_MUNICIPIO_METADADOS = f"{IBGE_MALHAS}/municipios/{{id}}/metadados"
-MALHA_ESTADO = f"{IBGE_MALHAS}/estados/{{uf_id}}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima"
-
 UF_CODIGOS = {
     "11": "RO", "12": "AC", "13": "AM", "14": "RR", "15": "PA", "16": "AP",
     "17": "TO", "21": "MA", "22": "PI", "23": "CE", "24": "RN", "25": "PB",
