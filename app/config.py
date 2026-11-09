@@ -45,9 +45,14 @@ SIDRA_URL_S_PERIODO = (
 TAB_POPULACAO = 6579
 TAB_PIB = 5938
 TAB_EMPRESAS = 6449
+TAB_AREA = 1301
 
 VAR_POPULACAO = 9324
 VAR_PIB = 37
+VAR_AREA = 615
+
+API_GEOJSON_BRASIL = "https://raw.githubusercontent.com/luizpedone/municipal-brazilian-geodata/master/data/Brasil.json"
+API_COORDENADAS_MUNICIPIOS = "https://raw.githubusercontent.com/kelvins/Municipios-Brasileiros/main/json/municipios.json"
 VAR_PIB_PART_UF = 497
 VAR_PIB_PART_BR = 496
 

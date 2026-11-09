@@ -13,6 +13,8 @@ import httpx
 from app.services import monitor
 
 from app.config import (
+    API_COORDENADAS_MUNICIPIOS,
+    API_GEOJSON_BRASIL,
     SIDRA_MUNICIPIOS_CATALOGO,
     UF_NOMES,
     MALHA_BRASIL,
@@ -25,10 +27,12 @@ from app.config import (
     TAB_POPULACAO,
     TAB_PIB,
     TAB_EMPRESAS,
+    TAB_AREA,
     VAR_POPULACAO,
     VAR_PIB,
     VAR_PIB_PART_UF,
     VAR_PIB_PART_BR,
+    VAR_AREA,
     VARS_VAB_SETORIAL,
     TTL_LOCALIDADES,
     TTL_SIDRA,
@@ -210,12 +214,25 @@ async def sidra(tabela: int, ids: Any, var: str = "all", periodo: str = "") -> t
 async def malha_brasil() -> dict[str, Any]:
 
     async def _baixar() -> dict[str, Any]:
-        resp = await _consulta(MALHA_BRASIL)
-        malha = resp.json()
-        for feicao in malha.get("features", []):
-            props = feicao.setdefault("properties", {})
-            props["name"] = UF_CODIGOS.get(str(props.get("codarea", "")), props.get("codarea", ""))
-        return malha
+        try:
+            resp = await _consulta(MALHA_BRASIL)
+            malha = resp.json()
+            for feicao in malha.get("features", []):
+                props = feicao.setdefault("properties", {})
+                props["name"] = UF_CODIGOS.get(str(props.get("codarea", "")), props.get("codarea", ""))
+            return malha
+        except Exception:
+            pass
+
+        try:
+            resp = await _consulta(API_GEOJSON_BRASIL)
+            malha = json.loads(resp.content.decode("utf-8-sig"))
+            for feicao in malha.get("features", []):
+                props = feicao.setdefault("properties", {})
+                props["name"] = props.get("UF") or props.get("codarea", "")
+            return malha
+        except Exception:
+            return {"type": "FeatureCollection", "features": []}
 
     return await CACHE.get_or_set("ibge:malha-brasil", TTL_LOCALIDADES, _baixar)
 
@@ -256,13 +273,39 @@ def _centroide(geojson: dict[str, Any]) -> dict[str, float] | None:
         "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
     }
 
+async def _coordenadas_municipios_api() -> dict[int, list[float]]:
+    async def _baixar() -> dict[int, list[float]]:
+        try:
+            resp = await _consulta(API_COORDENADAS_MUNICIPIOS)
+            dados = json.loads(resp.content.decode("utf-8-sig"))
+            coords: dict[int, list[float]] = {}
+            for item in dados:
+                cod = item.get("codigo_ibge")
+                lat = item.get("latitude")
+                lon = item.get("longitude")
+                if cod and lat is not None and lon is not None:
+                    coords[int(cod)] = [float(lat), float(lon)]
+            return coords
+        except Exception:
+            return {}
+
+    return await CACHE.get_or_set("api:coordenadas-municipios", TTL_LOCALIDADES, _baixar)
+
 async def centro_municipio(id_mun: int) -> dict[str, float] | None:
     async def _baixar() -> dict[str, float] | None:
         try:
             resp = await _consulta(MALHA_MUNICIPIO.format(id=id_mun))
-            return _centroide(resp.json())
+            res = _centroide(resp.json())
+            if res:
+                return res
         except Exception:
-            return None
+            pass
+
+        coords_map = await _coordenadas_municipios_api()
+        coords = coords_map.get(id_mun)
+        if coords:
+            return {"lat": coords[0], "lon": coords[1]}
+        return None
 
     return await CACHE.get_or_set(f"ibge:centro:{id_mun}", TTL_LOCALIDADES, _baixar)
 
@@ -277,12 +320,23 @@ async def metadados_territoriais(id_mun: int) -> dict[str, Any]:
                 area_obj = item.get("area") or {}
                 dim = area_obj.get("dimensao")
                 area_km2 = float(dim) if dim else None
-                return {
-                    "area_km2": area_km2,
-                    "unidade": area_obj.get("unidade", {}).get("id", "km2"),
-                }
+                if area_km2:
+                    return {
+                        "area_km2": area_km2,
+                        "unidade": area_obj.get("unidade", {}).get("id", "km2"),
+                    }
         except Exception:
             pass
+
+        try:
+            _, linhas = await sidra(TAB_AREA, id_mun, var=str(VAR_AREA), periodo="last")
+            if linhas:
+                val = _num(linhas[0].get("V"))
+                if val:
+                    return {"area_km2": val, "unidade": "km2"}
+        except Exception:
+            pass
+
         return {"area_km2": None, "unidade": "km2"}
 
     return await CACHE.get_or_set(f"ibge:meta-territorio:{id_mun}", TTL_LOCALIDADES, _baixar)
@@ -406,9 +460,18 @@ async def centros_uf(uf_id: str | int) -> dict[int, dict[str, float]]:
                         "lon": round(sum(p[0] for p in pontos) / len(pontos), 4),
                         "lat": round(sum(p[1] for p in pontos) / len(pontos), 4),
                     }
-            return centros
+            if centros:
+                return centros
         except Exception:
-            return {}
+            pass
+
+        coords_map = await _coordenadas_municipios_api()
+        prefixo = str(uf_id)
+        return {
+            cod: {"lat": c[0], "lon": c[1]}
+            for cod, c in coords_map.items()
+            if str(cod).startswith(prefixo)
+        }
 
     return await CACHE.get_or_set(f"ibge:centros-uf:{uf_id}", TTL_LOCALIDADES, _baixar)
 
