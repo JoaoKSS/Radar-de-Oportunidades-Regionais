@@ -328,11 +328,11 @@
           },
           regions: [{
             name: R.uf,
-            itemStyle: { areaColor: '#ffffff', borderColor: '#0d5f4c', borderWidth: 1.5 },
+            itemStyle: { areaColor: '#ffffff', borderColor: '#0d5f4c', borderWidth: 2 },
             label: { show: true, color: '#0d5f4c', fontSize: 12, fontWeight: 700 },
             emphasis: {
               disabled: true,
-              itemStyle: { areaColor: '#ffffff' },
+              itemStyle: { areaColor: '#ffffff', borderColor: '#0d5f4c', borderWidth: 2 },
             },
           }],
         };
@@ -345,56 +345,6 @@
         }
 
         var series = [];
-        series.push({
-          type: 'map',
-          map: 'brasil-uf',
-          geoIndex: 0,
-          silent: true,
-          data: [{
-            name: R.uf,
-            itemStyle: {
-              areaColor: '#ffffff',
-              borderColor: '#0d5f4c',
-              borderWidth: 2,
-            },
-            emphasis: {
-              disabled: true,
-              itemStyle: { areaColor: '#ffffff' }
-            }
-          }]
-        });
-
-        var ufFeature = (malha.features || []).find(function (f) {
-          return f.properties && f.properties.name === R.uf;
-        });
-        if (ufFeature && ufFeature.geometry) {
-          var geom = ufFeature.geometry;
-          var lineCoords = [];
-          if (geom.type === 'Polygon') {
-            lineCoords = geom.coordinates;
-          } else if (geom.type === 'MultiPolygon') {
-            geom.coordinates.forEach(function (poly) {
-              lineCoords = lineCoords.concat(poly);
-            });
-          }
-          if (lineCoords.length) {
-            series.push({
-              type: 'lines',
-              coordinateSystem: 'geo',
-              polyline: true,
-              silent: true,
-              zlevel: 2,
-              lineStyle: {
-                color: '#0d5f4c',
-                width: 2.2,
-                opacity: 1
-              },
-              data: lineCoords.map(function (ring) {
-                return { coords: ring };
-              })
-            });
-          }
-        }
 
         if (viz.length) {
           series.push({
