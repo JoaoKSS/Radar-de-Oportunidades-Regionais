@@ -145,7 +145,10 @@ async def health() -> JSONResponse:
 @app.get("/api/malha/brasil")
 async def api_malha_brasil() -> JSONResponse:
 
-    return JSONResponse(await ibge.malha_brasil())
+    return JSONResponse(
+        await ibge.malha_brasil(),
+        headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"},
+    )
 
 @app.get("/api/monitor")
 async def api_monitor() -> JSONResponse:
