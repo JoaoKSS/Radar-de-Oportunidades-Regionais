@@ -312,7 +312,7 @@
           roam: true,
           scaleLimit: {
             min: 0.85,
-            max: 12
+            max: 30
           },
           silent: false,
           selectedMode: false,
