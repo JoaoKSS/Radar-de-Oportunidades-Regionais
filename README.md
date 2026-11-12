@@ -8,9 +8,7 @@
 ![Banco Central do Brasil](https://img.shields.io/badge/BACEN-SGS-1F3D58?style=for-the-badge)
 ![IBGE](https://img.shields.io/badge/IBGE-SIDRA-002F6C?style=for-the-badge)
 
-Sistema de investigação econômica por município: o usuário escolhe uma cidade e
-recebe indicadores, evolução histórica, comparativo entre municípios e
-**pontos de atenção para novos negócios**.
+Sistema de investigação econômica por município: o usuário escolhe uma cidade e recebe indicadores, evolução histórica, comparativo entre municípios e **pontos de atenção para novos negócios**.
 
 ## Como rodar
 
@@ -64,20 +62,14 @@ Gráficos comparativos de PIB per capita, evolução populacional e estrutura se
 
 | Protocolo | Fonte | O que traz |
 |---|---|---|
-| **REST/API** | IBGE — Localidades (`/api/v1/localidades`) | Catálogo dos 5.570 municípios, UFs e hierarquias regionais |
-| **REST/API** | IBGE — SIDRA (`apisidra.ibge.gov.br`) | Séries censitárias: t6579 (população), t5938 (PIB e VAB setorial), t6449 (empresas, empregos e salários do CEMPRE) |
-| **REST/API** | IBGE — Malhas Geográficas (`/api/v3/malhas`) | Fronteiras territoriais em GeoJSON do Brasil, UFs e municípios para os mapas vetoriais |
-| **SOAP** | Banco Central — FachadaWSSGS (`/wssgs/services/FachadaWSSGS`) | IPCA mensal (433), IPCA 12m (13522), Meta Selic (432), Câmbio (1), Inadimplência PJ (21086), Juros Capital de Giro (20749) |
+| **REST/API** | IBGE — SIDRA (`apisidra.ibge.gov.br`) | Catálogo oficial dos municípios e séries estatísticas: t5938 (PIB e VAB setorial), t6579 (população estimada), t6449 (empresas e salários CEMPRE) e t1301 (área territorial) |
+| **SOAP** | Banco Central — FachadaWSSGS: Sistema Gerenciador de Séries Temporais (`/wssgs/services/FachadaWSSGS`) | IPCA mensal (433), IPCA 12m (13522), Meta Selic (432), Câmbio (1), Inadimplência PJ (21086) e Juros Capital de Giro (20749) |
 | **REST (Fallback)** | Banco Central — SGS REST (`api.bcb.gov.br/dados/serie`) | Mecanismo de tolerância a falhas: reserva automática caso o endpoint SOAP esteja fora do ar |
+| **Local (GeoJSON)** | Malhas e Coordenadas (`app/data/`) | Geometrias vetoriais dos estados (`malha_estados.json`) e centróides de latitude/longitude dos municípios (`coordenadas_municipios.json`) |
 
-O serviço SOAP usa envelope `rpc/encoded` do Apache Axis 1.2 (2005), com
-`soapenc:Array` sem modelo de conteúdo e referências `multiRef` (id/href)
-recorrentes — serializers automáticos quebram nesse formato (zeep falha no
-`ArrayOflong`). Por isso o cliente SOAP em `app/services/bcb.py` constrói o
-envelope à mão e resolve o grafo de referências com um walker recursivo.
+O webservice SOAP do Banco Central utiliza um padrão legado (`rpc/encoded` do Apache Axis) que é incompatível com bibliotecas automáticas modernas (como *zeep*). Por isso, o cliente em `app/services/bcb.py` monta as requisições XML manualmente e processa a resposta por meio de um algoritmo recursivo próprio.
 
-Se o endpoint SOAP estiver fora, o sistema degrada para a API REST legada do
-SGS e **marca a fonte na tela** (`SOAP` / `REST`).
+Caso o serviço SOAP fique indisponível, o sistema recorre automaticamente à API REST do SGS como mecanismo de tolerância a falhas, indicando a fonte utilizada diretamente na interface (`SOAP` / `REST`).
 
 ## Padrão de Comunicação (Enviado / Recebido)
 
@@ -147,96 +139,58 @@ Na API SIDRA, o primeiro elemento (`[0]`) serve como cabeçalho de metadados, e 
 
 ---
 
-### 2. Comunicação REST — IBGE Localidades (Catálogo e Hierarquia)
+### 2. Comunicação REST — IBGE SIDRA (Catálogo de Municípios)
 
-* **Finalidade:** Obter os 5.570 municípios para autocomplete e metadados territoriais (região imediata, intermediária, mesorregião e estado).
-* **Exemplo:** Busca dos dados cadastrais de Montes Claros · MG.
+* **Finalidade:** Obter dinamicamente a relação dos 5.570 municípios do Brasil e seus respectivos códigos IBGE e UFs para o sistema de busca e autocomplete.
+* **Estratégia:** Consulta em lote ao último ano da tabela de PIB municipal (`t/5938`), parseando nome e UF da dimensão territorial.
 
 **Enviado (HTTP GET Request):**
 ```http
-GET /api/v1/localidades/municipios/3143302
-Host: servicodados.ibge.gov.br
+GET /values/t/5938/n6/all/v/37/p/last%201?formato=json
+Host: apisidra.ibge.gov.br
 User-Agent: radar-oportunidades/1.0
 ```
 
 **Recebido (HTTP 200 OK — JSON):**
 ```json
-{
-  "id": 3143302,
-  "nome": "Montes Claros",
-  "microrregiao": {
-    "id": 31024,
-    "nome": "Montes Claros",
-    "mesorregiao": {
-      "id": 3102,
-      "nome": "Norte de Minas",
-      "UF": {
-        "id": 31,
-        "sigla": "MG",
-        "nome": "Minas Gerais",
-        "regiao": {
-          "id": 3,
-          "sigla": "SE",
-          "nome": "Sudeste"
-        }
-      }
-    }
+[
+  {
+    "NC": "Nível Territorial (Código)",
+    "NN": "Nível Territorial",
+    "MC": "Unidade de Medida (Código)",
+    "MN": "Unidade de Medida",
+    "V": "Valor",
+    "D1C": "Município (Código)",
+    "D1N": "Município",
+    "D2C": "Variável (Código)",
+    "D2N": "Variável",
+    "D3C": "Ano (Código)",
+    "D3N": "Ano"
   },
-  "regiao-imediata": {
-    "id": 310043,
-    "nome": "Montes Claros",
-    "regiao-intermediaria": {
-      "id": 3108,
-      "nome": "Montes Claros",
-      "UF": {
-        "id": 31,
-        "sigla": "MG",
-        "nome": "Minas Gerais"
-      }
-    }
+  {
+    "NC": "6",
+    "NN": "Município",
+    "MC": "1000",
+    "MN": "Mil Reais",
+    "V": "13328456",
+    "D1C": "3143302",
+    "D1N": "Montes Claros - MG",
+    "D2C": "37",
+    "D2N": "Produto Interno Bruto a preços correntes",
+    "D3C": "2023",
+    "D3N": "2023"
   }
-}
+]
 ```
 
 ---
 
-### 3. Comunicação REST — IBGE Malhas Geográficas (Polígonos Espaciais)
+### 3. Georreferenciamento Local — Malhas Vetoriais e Centróides
 
-* **Finalidade:** Fornecer as geometrias em GeoJSON das fronteiras do Brasil, das UFs e dos municípios para plotagem dos mapas interativos pelo Apache ECharts.
-* **Exemplo:** Malha vetorial do município de Montes Claros · MG.
-
-**Enviado (HTTP GET Request):**
-```http
-GET /api/v3/malhas/municipios/3143302?formato=application/vnd.geo+json
-Host: servicodados.ibge.gov.br
-User-Agent: radar-oportunidades/1.0
-```
-
-**Recebido (HTTP 200 OK — GeoJSON):**
-```json
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [-43.856, -16.489],
-            [-43.782, -16.512],
-            [-43.641, -16.634],
-            [-43.856, -16.489]
-          ]
-        ]
-      },
-      "properties": {
-        "codarea": "3143302"
-      }
-    }
-  ]
-}
-```
+* **Finalidade:** Fornecer as geometrias GeoJSON das fronteiras estaduais do Brasil e as coordenadas geográficas (latitude/longitude) dos 5.570 municípios para plotagem dos mapas interativos pelo Apache ECharts.
+* **Estratégia:** Para máxima performance, baixa latência e operação offline resiliente, os vetores e coordenadas são carregados diretamente de arquivos estáticos otimizados em `app/data/`:
+  * `app/data/malha_estados.json`: Geometrias GeoJSON simplificadas dos estados brasileiros (servidas internamente pela rota `/api/malha/brasil`).
+  * `app/data/coordenadas_municipios.json`: Mapeamento chave-valor de centróides (`id_municipio -> [lat, lon]`) para posicionamento de marcadores e cálculo de vizinhança territorial.
 
 ---
 
@@ -369,9 +323,11 @@ User-Agent: radar-oportunidades/1.0
 └── app/
     ├── main.py            Rotas FastAPI, filtros pt-BR e orquestração de visualizações
     ├── config.py          Endpoints, códigos das séries SGS e TTLs de cache
+    ├── data/              Malhas vetoriais dos estados e centróides dos 5.570 municípios
     ├── services/
-    │   ├── ibge.py        Cliente REST — Localidades, SIDRA e Malhas do IBGE
+    │   ├── ibge.py        Cliente REST — Catálogo de municípios, séries econômicas e metadados no SIDRA
     │   ├── bcb.py         Cliente SOAP — FachadaWSSGS (com walker multiRef) + Fallback REST
+    │   ├── geo.py         Serviço de malhas e geolocalização dos municípios
     │   ├── monitor.py     Auditoria em memória de requisições enviadas/recebidas
     │   └── cache.py       Mecanismo de cache assíncrono com TTL
     ├── analysis/
