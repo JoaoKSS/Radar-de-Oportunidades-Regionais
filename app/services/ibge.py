@@ -48,31 +48,22 @@ def http() -> httpx.AsyncClient:
 def _normalizar(texto: str) -> str:
     return unicodedata.normalize("NFD", texto).encode("ascii", "ignore").decode().lower()
 
-LIMITE_REGISTROS = 10
-
 def _rotulo_url(url: str) -> str:
     p = urlsplit(url)
     rotulo = p.netloc + p.path + (f"?{p.query}" if p.query else "")
     return rotulo if len(rotulo) <= 72 else rotulo[:69] + "…"
 
 def _pedido_legivel(url: str) -> str:
-
     p = urlsplit(url)
     alvo = p.path + (f"?{p.query}" if p.query else "")
     return f"GET {alvo}\nHost: {p.netloc}"
 
 def _resumo_json(texto: str) -> str:
-
     try:
         dados = json.loads(texto)
+        return json.dumps(dados, ensure_ascii=False, indent=2)
     except (ValueError, TypeError):
         return texto
-    if isinstance(dados, list) and len(dados) > LIMITE_REGISTROS:
-        total = len(dados)
-        corpo = json.dumps(dados[:LIMITE_REGISTROS], ensure_ascii=False, indent=2)
-        total_txt = f"{total:,}".replace(",", ".")
-        return f"{corpo}\n\n… [{total_txt} registros no total — exibindo {LIMITE_REGISTROS}]"
-    return json.dumps(dados, ensure_ascii=False, indent=2)
 
 async def _consulta(url: str) -> httpx.Response:
 
