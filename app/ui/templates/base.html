@@ -10,7 +10,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/site.css?v=49">
+  <link rel="stylesheet" href="/static/css/site.css?v=50">
   <link rel="expect" href="#conteudo-principal" blocking="render">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23edf7f4'/><rect width='30' height='30' x='1' y='1' rx='7' fill='none' stroke='%23b6ded4' stroke-width='1'/><circle cx='16' cy='16' r='9' fill='none' stroke='%230d5f4c' stroke-width='2.2'/><line x1='16' y1='16' x2='23' y2='11' stroke='%230d5f4c' stroke-width='2.2' stroke-linecap='round'/><circle cx='16' cy='16' r='2.4' fill='%230d5f4c'/></svg>">
@@ -154,7 +154,10 @@
     <div class="monitor-sombra" data-fechar></div>
     <aside class="monitor-janela" role="dialog" aria-modal="true" aria-label="Inspecionar requisições REST e SOAP">
       <header class="monitor-cab">
-        <h2>Inspecionar integrações</h2>
+        <div class="monitor-cab-topo">
+          <h2>Inspecionar integrações</h2>
+          <button type="button" class="monitor-fechar" data-fechar aria-label="Fechar">&times;</button>
+        </div>
         <div class="monitor-filtros" id="monitor-filtros">
           <button type="button" data-filtro="all" class="ativo">Tudo</button>
           <button type="button" data-filtro="contexto" id="btn-filtro-contexto" style="display:none;"></button>
@@ -162,7 +165,6 @@
           <button type="button" data-filtro="SOAP">SOAP</button>
           <button type="button" id="monitor-atualizar" title="Recarregar agora">↻</button>
         </div>
-        <button type="button" class="monitor-fechar" data-fechar aria-label="Fechar">&times;</button>
       </header>
       <div class="monitor-lista" id="monitor-lista"></div>
     </aside>

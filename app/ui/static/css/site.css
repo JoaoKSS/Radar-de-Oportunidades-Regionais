@@ -1728,20 +1728,25 @@ a:hover {
 .monitor.aberto .monitor-janela { transform: translateX(0); }
 
 .monitor-cab {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--borda);
   flex: none;
   background: #f8fafc;
 }
-.monitor-cab h2 {
-  margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap;
+.monitor-cab-topo {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
 }
-.monitor-filtros { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.monitor-cab h2 {
+  margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+}
+.monitor-filtros {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; width: 100%;
+}
 .monitor-filtros button {
   border: 1px solid var(--borda); background: var(--superficie);
-  border-radius: 999px; padding: 4px 10px;
-  font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--tinta-fraca);
+  border-radius: 999px; padding: 4px 12px;
+  font-size: 12px; font-weight: 600; cursor: pointer; color: var(--tinta-fraca);
   white-space: nowrap;
   transition: all 0.15s ease;
 }
@@ -1752,11 +1757,10 @@ a:hover {
 .monitor-filtros button.ativo {
   border-color: var(--acento); color: var(--acento); background: var(--acento-suave);
 }
-.monitor-filtros #monitor-atualizar { font-family: 'JetBrains Mono', monospace; padding: 4px 8px; }
+.monitor-filtros #monitor-atualizar { font-family: 'JetBrains Mono', monospace; padding: 4px 10px; margin-left: auto; }
 .monitor-fechar {
-  margin-left: 4px;
   border: none; background: none; cursor: pointer;
-  font-size: 22px; line-height: 1; color: var(--tinta-fraca);
+  font-size: 24px; line-height: 1; color: var(--tinta-fraca);
   padding: 2px 6px; border-radius: var(--raio-sm);
   transition: color 0.15s;
 }
