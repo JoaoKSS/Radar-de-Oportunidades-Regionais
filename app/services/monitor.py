@@ -10,10 +10,7 @@ MAX_CARACTERES = 6_000
 _eventos: Deque[dict[str, Any]] = deque(maxlen=MAX_EVENTOS)
 
 def _cortar(texto: str) -> str:
-    m = str(texto or "")
-    if len(m) <= MAX_CARACTERES:
-        return m
-    return m[:MAX_CARACTERES] + f"\n\n… [{len(m):,} caracteres no total, cortado para exibição]"
+    return str(texto or "")
 
 def registrar(
     protocolo: str,
