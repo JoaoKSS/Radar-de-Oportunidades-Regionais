@@ -62,13 +62,13 @@ Gráficos comparativos de PIB per capita, evolução populacional e estrutura se
 
 | Protocolo | Fonte | O que traz | Documentação Oficial |
 |---|---|---|---|
-| **SOAP** | Banco Central — FachadaWSSGS (`/wssgs/services/FachadaWSSGS`) | IPCA mensal (433), IPCA 12m (13522), Meta Selic (432), Câmbio (1), Inadimplência PJ (21086) e Juros Capital de Giro (20749) | **[Arquivo WSDL Direto](https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl)** · [Manual de Uso do SGS WebServices (PDF)](https://www.bcb.gov.br/conteudo/homept/Ajuda%20SGS/Manual_de_Uso_do_SGS-WebServices.pdf) |
-| **REST (Fallback)** | Banco Central — SGS REST (`api.bcb.gov.br/dados/serie`) | Mecanismo de tolerância a falhas: reserva automática caso o endpoint SOAP esteja fora do ar | [Portal Brasileiro de Dados Abertos — SGS](https://dadosabertos.bcb.gov.br/) |
-| **REST/API** | IBGE — SIDRA (`apisidra.ibge.gov.br`) | Catálogo oficial dos municípios e séries estatísticas: t5938 (PIB e VAB setorial), t6579 (população estimada), t6449 (empresas e salários CEMPRE) e t1301 (área territorial) | [Documentação da API SIDRA](https://apisidra.ibge.gov.br/) |
+| **SOAP** | Banco Central — FachadaWSSGS (`/wssgs/services/FachadaWSSGS`) | IPCA mensal (433), IPCA 12m (13522), Meta Selic (432), Câmbio (1), Inadimplência PJ (21086) e Juros Capital de Giro (20749) | **<a href="https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl" target="_blank" rel="noopener noreferrer">Arquivo WSDL Direto</a>** · <a href="https://www.bcb.gov.br/conteudo/homept/Ajuda%20SGS/Manual_de_Uso_do_SGS-WebServices.pdf" target="_blank" rel="noopener noreferrer">Manual de Uso do SGS WebServices (PDF)</a> |
+| **REST (Fallback)** | Banco Central — SGS REST (`api.bcb.gov.br/dados/serie`) | Mecanismo de tolerância a falhas: reserva automática caso o endpoint SOAP esteja fora do ar | <a href="https://dadosabertos.bcb.gov.br/" target="_blank" rel="noopener noreferrer">Portal Brasileiro de Dados Abertos — SGS</a> |
+| **REST/API** | IBGE — SIDRA (`apisidra.ibge.gov.br`) | Catálogo oficial dos municípios e séries estatísticas: t5938 (PIB e VAB setorial), t6579 (população estimada), t6449 (empresas e salários CEMPRE) e t1301 (área territorial) | <a href="https://apisidra.ibge.gov.br/" target="_blank" rel="noopener noreferrer">Documentação da API SIDRA</a> |
 | **Local (GeoJSON)** | Malhas e Coordenadas (`app/data/`) | Geometrias vetoriais dos estados (`malha_estados.json`) e centróides de latitude/longitude dos municípios (`coordenadas_municipios.json`) | — |
 
 > **Link direto para o WSDL utilizado no serviço SOAP:**  
-> [`https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl`](https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl)
+> <a href="https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl" target="_blank" rel="noopener noreferrer"><code>https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl</code></a>
 
 O webservice SOAP do Banco Central utiliza um padrão legado (`rpc/encoded` do Apache Axis) que é incompatível com bibliotecas automáticas modernas (como *zeep*). Por isso, o cliente em `app/services/bcb.py` monta as requisições XML manualmente e processa a resposta por meio de um algoritmo recursivo próprio.
 
@@ -201,7 +201,7 @@ User-Agent: radar-oportunidades/1.0
 
 * **Finalidade:** Obter séries macroeconômicas oficiais (ex.: IPCA mensal `433` para deflação do PIB, IPCA acumulado em 12 meses `13522`, Meta Selic `432`, Juros de Capital de Giro `20749`, Inadimplência PJ `21086`).
 * **Padrão:** SOAP 1.1 / WSDL RPC-Encoded (Apache Axis 1.2 com grafo `multiRef`).
-* **Arquivo WSDL:** [`https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl`](https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl)
+* **Arquivo WSDL:** <a href="https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl" target="_blank" rel="noopener noreferrer"><code>https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?wsdl</code></a>
 * **Endpoint:** `https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS`
 
 **Enviado (SOAP Request — Envelope XML):**
