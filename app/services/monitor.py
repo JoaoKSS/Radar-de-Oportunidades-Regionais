@@ -23,12 +23,14 @@ def registrar(
     duracao_ms: float | None = None,
     enviado: str = "",
     recebido: str = "",
+    url: str = "",
 ) -> None:
 
     try:
         _eventos.appendleft({
             "protocolo": protocolo,
             "operacao": operacao,
+            "url": url,
             "status": str(status or ""),
             "duracao_ms": round(duracao_ms) if duracao_ms is not None else None,
             "t": time.strftime("%H:%M:%S"),

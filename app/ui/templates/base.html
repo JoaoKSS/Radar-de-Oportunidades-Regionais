@@ -155,8 +155,9 @@
     <aside class="monitor-janela" role="dialog" aria-modal="true" aria-label="Inspecionar requisições REST e SOAP">
       <header class="monitor-cab">
         <h2>Inspecionar integrações</h2>
-        <div class="monitor-filtros">
+        <div class="monitor-filtros" id="monitor-filtros">
           <button type="button" data-filtro="all" class="ativo">Tudo</button>
+          <button type="button" data-filtro="contexto" id="btn-filtro-contexto" style="display:none;"></button>
           <button type="button" data-filtro="REST">REST</button>
           <button type="button" data-filtro="SOAP">SOAP</button>
           <button type="button" id="monitor-atualizar" title="Recarregar agora">↻</button>
@@ -173,7 +174,61 @@
       if (!selo) return;
       const painel = document.getElementById('monitor');
       const lista = document.getElementById('monitor-lista');
+      const btnCtx = document.getElementById('btn-filtro-contexto');
       let filtro = 'all';
+
+      function obterContextoAtivo() {
+        if (window.__RADAR__ && window.__RADAR__.id) {
+          return {
+            tipo: 'municipio',
+            id: String(window.__RADAR__.id),
+            rotulo: 'Esta Cidade' + (window.__RADAR__.nome ? ' (' + window.__RADAR__.nome + ')' : '')
+          };
+        }
+        var mMatch = window.location.pathname.match(/\/municipio\/(\d+)/);
+        if (mMatch) {
+          return {
+            tipo: 'municipio',
+            id: mMatch[1],
+            rotulo: 'Esta Cidade'
+          };
+        }
+        if (window.__COMPARADOR__ && Array.isArray(window.__COMPARADOR__.idsSelecionados) && window.__COMPARADOR__.idsSelecionados.length >= 2) {
+          return {
+            tipo: 'comparar',
+            ids: window.__COMPARADOR__.idsSelecionados.map(String),
+            rotulo: 'No Comparativo (' + window.__COMPARADOR__.idsSelecionados.length + ' cidades)'
+          };
+        }
+        var cMatch = window.location.search.match(/[?&]ids=([^&]+)/);
+        if (cMatch) {
+          var idsArr = cMatch[1].split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+          if (idsArr.length >= 2) {
+            return {
+              tipo: 'comparar',
+              ids: idsArr,
+              rotulo: 'No Comparativo (' + idsArr.length + ' cidades)'
+            };
+          }
+        }
+        return null;
+      }
+
+      function sincronizarBotaoContexto() {
+        const ctx = obterContextoAtivo();
+        if (ctx && btnCtx) {
+          btnCtx.style.display = 'inline-flex';
+          btnCtx.textContent = ctx.rotulo;
+        } else if (btnCtx) {
+          btnCtx.style.display = 'none';
+          if (filtro === 'contexto') {
+            filtro = 'all';
+            painel.querySelectorAll('[data-filtro]').forEach(function (o) {
+              o.classList.toggle('ativo', o.dataset.filtro === 'all');
+            });
+          }
+        }
+      }
 
       function fechar() {
         painel.classList.remove('aberto');
@@ -181,6 +236,7 @@
         setTimeout(function () { painel.hidden = true; }, 240);
       }
       function abrir() {
+        sincronizarBotaoContexto();
         painel.hidden = false;
         document.body.style.overflow = 'hidden';
         requestAnimationFrame(function () { painel.classList.add('aberto'); });
@@ -227,13 +283,28 @@
           const r = await fetch('/api/monitor');
           const eventos = (await r.json()).eventos || [];
           lista.innerHTML = '';
+          const ctx = obterContextoAtivo();
           const visiveis = eventos.filter(function (ev) {
-            return filtro === 'all' || ev.protocolo === filtro;
+            if (filtro === 'all') return true;
+            if (filtro === 'REST' || filtro === 'SOAP') return ev.protocolo === filtro;
+            if (filtro === 'contexto' && ctx) {
+              if (ev.protocolo === 'SOAP') return true;
+              const url = (ev.url || ev.operacao || '') + ' ' + (ev.enviado || '');
+              if (ctx.tipo === 'municipio') {
+                return url.includes(ctx.id);
+              }
+              if (ctx.tipo === 'comparar') {
+                return ctx.ids.some(function (idMun) { return url.includes(idMun); });
+              }
+            }
+            return true;
           });
           if (!visiveis.length) {
             const v = document.createElement('p');
             v.className = 'ev-vazio';
-            v.textContent = 'Nenhuma requisição registrada nesta execução — abra um município ou faça uma busca.';
+            v.textContent = filtro === 'contexto'
+              ? 'Nenhuma requisição direta desta consulta registrada recentemente no histórico (pode estar em cache).'
+              : 'Nenhuma requisição registrada nesta execução — abra um município ou faça uma busca.';
             lista.append(v);
             return;
           }

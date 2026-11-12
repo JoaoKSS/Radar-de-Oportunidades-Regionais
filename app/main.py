@@ -203,6 +203,7 @@ def _payload_graficos(dados: dict[str, Any]) -> dict[str, Any]:
         "mapa": dados.get("mapa"),
         "nome": dados["info"]["nome"],
         "uf": dados["info"]["uf"],
+        "id": dados["info"]["id"],
         "pib": {
             "anos": [a for a, _ in pib_nom],
             "nominal": [v for _, v in pib_nom],

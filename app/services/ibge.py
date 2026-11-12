@@ -86,6 +86,7 @@ async def _consulta(url: str) -> httpx.Response:
             duracao_ms=(time.perf_counter() - ini) * 1000,
             enviado=_pedido_legivel(url),
             recebido=_resumo_json(resp.text),
+            url=url,
         )
         return resp
     except httpx.HTTPError as erro:
@@ -96,6 +97,7 @@ async def _consulta(url: str) -> httpx.Response:
                    else f"erro de rede · {type(erro).__name__}",
             duracao_ms=(time.perf_counter() - ini) * 1000,
             enviado=_pedido_legivel(url), recebido=str(erro),
+            url=url,
         )
         raise
 
