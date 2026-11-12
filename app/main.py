@@ -30,14 +30,18 @@ async def _aquecer_cache():
             bcb.contexto_financeiro(anos=26),
             return_exceptions=True,
         )
-        _log.info("Aquecendo cidades em destaque da página inicial...")
-        for id_mun, nome, uf in ATALHOS:
-            try:
-                await dados_municipio(id_mun)
-                _log.info(f"Cache pronto: {nome} ({uf})")
-            except Exception as erro:
-                _log.warning(f"Falha ao pré-aquecer {nome}: {erro}")
-        _log.info("Pré-aquecimento concluído: todas as cidades em destaque já estão em memória.")
+        # Na Vercel (Serverless), não aquece as cidades em loop de background
+        # para evitar concorrência desnecessária e desconexões de rede
+        import os
+        if not os.environ.get("VERCEL"):
+            _log.info("Aquecendo cidades em destaque da página inicial...")
+            for id_mun, nome, uf in ATALHOS:
+                try:
+                    await dados_municipio(id_mun)
+                    _log.info(f"Cache pronto: {nome} ({uf})")
+                except Exception as erro:
+                    _log.warning(f"Falha ao pré-aquecer {nome}: {erro}")
+            _log.info("Pré-aquecimento concluído: todas as cidades em destaque já estão em memória.")
     except Exception as erro:
         _log.warning(f"Erro no pré-aquecimento geral: {erro}")
 
