@@ -23,36 +23,42 @@ python3 -m venv .venv
 ## Interface do Sistema
 
 ### 1. Painel do Município — Indicadores Gerais e Evolução Histórica
-Apresentação dos principais indicadores econômicos, evolução demográfica e crescimento real do PIB municipal deflacionado pelo IPCA.
+Apresentação dos principais indicadores econômicos.
 
 ![Painel do Município - Indicadores e Evolução](assets/tela-municipio-1.png)
 
 ### 2. Composição Setorial e Ambiente Macroeconômico
-Detalhamento do Valor Adicionado Bruto (VAB) por setor (Agropecuária, Indústria, Serviços e Administração Pública) integrado aos dados macroeconômicos do Banco Central obtidos via SOAP (Selic, IPCA, juros de capital de giro e taxa de inadimplência PJ).
+Detalhamento do Valor Adicionado Bruto (VAB) por setor (Agropecuária, Indústria, Serviços e Administração Pública) integrado aos dados macroeconômicos do Banco Central obtidos via SOAP (IPCA). Contém evolução demográfica e crescimento real do PIB municipal deflacionado pelo IPCA.
 
 ![Composição Setorial e Crédito](assets/tela-municipio-2.png)
 
 ### 3. Diagnóstico Estratégico de Mercado e Mapa Territorial
-Painel de heurísticas automatizadas com classificação por cores (Oportunidade, Atenção e Risco) para orientar decisões de novos negócios, acompanhado da malha geográfica vetorial do estado e destaque do município pesquisado.
+Painel de heurísticas automatizadas com classificação por cores (Oportunidade, Atenção e Risco) para orientar decisões de novos negócios, acompanhado da malha geográfica vetorial do estado e destaque do município pesquisado. Contém dados macroeconômicos do Banco Central obtidos via SOAP (Selic, IPCA, juros de capital de giro e taxa de inadimplência PJ).
+
 
 ![Diagnóstico de Mercado e Mapa Territorial](assets/tela-municipio-3.png)
 
 ### 4. Módulo de Comparação e Benchmarking Municipal
-Tela de análise comparativa simultânea (de 2 a 4 municípios) com tabelas de benchmarking, gráficos comparativos de PIB per capita, evolução populacional e estrutura setorial sobreposta.
+Tela de análise comparativa simultânea (de 2 a 4 municípios) com tabelas de benchmarking.
 
-![Comparativo entre Municípios](assets/tela-comparativo.png)
+![Comparativo entre Municípios](assets/tela-comparativo-1.png)
+
+
+### 5. Módulo de Comparação com Gráficos
+
+Gráficos comparativos de PIB per capita, evolução populacional e estrutura setorial sobreposta.
+
+![Comparativo entre Municípios - gráficos](assets/tela-comparativo-2.png)
 
 
 ## Rotas
 
 | Rota | Papel |
 |---|---|
-| `/` | Página inicial (busca por município com autocomplete e polos em destaque) |
+| `/` | Página inicial (busca por município com polos em destaque) |
 | `/municipio/{id}` | Painel analítico completo do município (PIB real, demografia, VAB setorial) |
 | `/comparar?ids=1,2,3` | Comparador de benchmarking direto entre 2 a 4 municípios |
-| `/api/localidades?q=` | API de autocomplete de municípios (IBGE Localidades com cache de 24 h) |
 | `/api/monitor` | API de auditoria em tempo real das requisições REST e SOAP trafegadas |
-| `/api/diagnostico` | Healthcheck das integrações externas (`{bcb_soap, bcb_reserva_rest, ibge_rest}`) |
 
 ## Integrações
 
