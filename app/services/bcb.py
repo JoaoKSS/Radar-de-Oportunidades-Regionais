@@ -247,6 +247,30 @@ async def _serie_rest(serie: int, inicio: dt.date, fim: dt.date) -> list[dict[st
             ini = time.perf_counter()
             try:
                 resp = await cli.get(url, params=params)
+                if resp.status_code == 404:
+                    monitor.registrar(
+                        "REST", rotulo,
+                        status="HTTP 404 · sem dados neste período",
+                        duracao_ms=(time.perf_counter() - ini) * 1000,
+                        enviado=enviado,
+                        recebido="[] (Série histórica ainda não havia iniciado nesta data)",
+                        url=str(resp.url),
+                    )
+                    cursor = fim_bloco + dt.timedelta(days=1)
+                    continue
+
+                if resp.status_code == 404:
+                    monitor.registrar(
+                        "REST", rotulo,
+                        status="HTTP 404 · sem dados neste período",
+                        duracao_ms=(time.perf_counter() - ini) * 1000,
+                        enviado=enviado,
+                        recebido="[] (Série histórica ainda não havia iniciado nesta data)",
+                        url=str(resp.url),
+                    )
+                    cursor = fim_bloco + dt.timedelta(days=1)
+                    continue
+
                 resp.raise_for_status()
                 duracao_ms = (time.perf_counter() - ini) * 1000
                 monitor.registrar(
@@ -275,19 +299,20 @@ async def _serie_rest(serie: int, inicio: dt.date, fim: dt.date) -> list[dict[st
             cursor = fim_bloco + dt.timedelta(days=1)
     return [{"data": k, "valor": v} for k, v in sorted(tudo.items())]
 
-async def contexto_financeiro(anos: int = 10) -> dict[str, Any]:
+async def contexto_financeiro(anos: int = 26) -> dict[str, Any]:
 
     hoje = dt.date.today()
-    inicio_longo = hoje.replace(year=hoje.year - anos)
-    inicio_recente = hoje.replace(year=hoje.year - 1)
+    inicio_longo = hoje.replace(year=hoje.year - anos)   # ~26 anos para o IPCA deflacionar o PIB
+    inicio_medio = hoje.replace(year=hoje.year - 3)      # 3 anos para cobrir com folga os 24 meses do painel
+    inicio_recente = hoje.replace(year=hoje.year - 1)    # 1 ano para cotações recentes
 
     alcance = {
         "ipca": inicio_longo,
         "ipca_12m": inicio_recente,
         "selic": inicio_recente,
         "cambio": inicio_recente,
-        "inadimplencia_pj": inicio_longo,
-        "juros_giro": inicio_longo,
+        "inadimplencia_pj": inicio_medio,
+        "juros_giro": inicio_medio,
     }
 
     async def _obter(nome: str, cod: int) -> tuple[str, dict[str, Any]]:
