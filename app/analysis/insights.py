@@ -2,6 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
+CRITERIOS_CATEGORIA = {
+    "Demografia": "• Oportunidade: Crescimento populacional ≥ +2% em 5 anos\n• Atenção: Variação entre 0% e +2% (estagnação) ou contração ≤ 0%",
+    "Economia Real": "• Oportunidade: PIB real (deflacionado por IPCA) ≥ +2% a.a.\n• Atenção: PIB real entre 0% e +2% a.a.\n• Risco: Recuo real do PIB ≤ 0% a.a.",
+    "Concorrência": "• Oportunidade: Baixa oferta relativa (≤ 10 emp./mil hab.)\n• Atenção: Mercado mediano a saturado (≥ 40 emp./mil hab.)",
+    "Mão de Obra": "• Oportunidade: Forte presença de médias/grandes empresas (> 8 vagas/empresa)\n• Atenção: Prevalência de microempresas/autônomos (< 2,5 vagas/empresa)",
+    "Poder de Compra": "• Oportunidade: Salário formal médio ≥ R$ 3.500/mês\n• Atenção: Salário formal médio ≤ R$ 2.000/mês",
+    "Perfil Econômico": "• Oportunidade: Vocação em Serviços (≥ 60%), Indústria (≥ 35%) ou Agro (≥ 25%)\n• Risco: Dependência da máquina pública (Admin. Pública ≥ 40% do VAB)",
+    "Peso no PIB": "• Oportunidade: Geração de ≥ 1% do PIB da UF ou ≥ 0,1% do PIB do Brasil\n• Atenção: Peso residual (< 1% da UF e < 0,1% do Brasil)",
+    "Relevância Estadual": "• Oportunidade: Município entre os 10 maiores PIBs do estado\n• Risco: Quartil inferior do estado (> 75% da fila do PIB estadual)",
+    "Macro / BCB": "• Oportunidade: Inflação nacional (IPCA 12m) controlada (< 4%)\n• Atenção: Selic elevada (≥ 12% a.a.)\n• Risco: Inflação nacional (IPCA 12m) descontrolada (≥ 6%)",
+    "Crédito / BCB": "• Oportunidade: Inadimplência corporativa baixa (< 3,5%)\n• Atenção: Juros de capital de giro elevados (≥ 25% a.a.)\n• Risco: Inadimplência corporativa no país elevada (≥ 3,5%)",
+}
+
 def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
     ind = dados["indicators"]
     insights: list[dict[str, str]] = []
@@ -263,5 +276,9 @@ def gerar(dados: dict[str, Any]) -> list[dict[str, str]]:
                 "metrica": f"Capital de Giro: {taxa_giro:.1f}% a.a.",
                 "texto": "Financiamento de curto prazo custoso para empresas. Fundamental projetar fluxo de caixa positivo sem depender de crédito rotativo."
             })
+
+    for item in insights:
+        cat = item.get("categoria", "")
+        item["criterio"] = CRITERIOS_CATEGORIA.get(cat, "")
 
     return insights
