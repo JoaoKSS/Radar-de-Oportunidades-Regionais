@@ -237,15 +237,41 @@ async def _serie_rest(serie: int, inicio: dt.date, fim: dt.date) -> list[dict[st
         while cursor <= fim:
             trecho = min(dt.timedelta(days=2909), fim - cursor)
             fim_bloco = cursor + trecho
-            resp = await cli.get(url, params={
+            params = {
                 "formato": "json",
                 "dataInicial": f"{cursor:%d/%m/%Y}",
                 "dataFinal": f"{fim_bloco:%d/%m/%Y}",
-            })
-            resp.raise_for_status()
-            for p in resp.json():
-                d, m, a = p["data"].split("/")
-                tudo[f"{a}-{m}-{d}"] = float(p["valor"])
+            }
+            rotulo = f"api.bcb.gov.br/dados/serie/{serie} ({params['dataInicial']} a {params['dataFinal']})"
+            enviado = f"GET {url}?formato=json&dataInicial={params['dataInicial']}&dataFinal={params['dataFinal']}\nHost: api.bcb.gov.br"
+            ini = time.perf_counter()
+            try:
+                resp = await cli.get(url, params=params)
+                resp.raise_for_status()
+                duracao_ms = (time.perf_counter() - ini) * 1000
+                monitor.registrar(
+                    "REST", rotulo,
+                    status=f"HTTP {resp.status_code} · fallback",
+                    duracao_ms=duracao_ms,
+                    enviado=enviado,
+                    recebido=resp.text,
+                    url=str(resp.url),
+                )
+                for p in resp.json():
+                    d, m, a = p["data"].split("/")
+                    tudo[f"{a}-{m}-{d}"] = float(p["valor"])
+            except Exception as erro:
+                duracao_ms = (time.perf_counter() - ini) * 1000
+                status_erro = getattr(getattr(erro, "response", None), "status_code", None)
+                monitor.registrar(
+                    "REST", rotulo,
+                    status=f"HTTP {status_erro} · erro fallback" if status_erro else f"erro · {type(erro).__name__}",
+                    duracao_ms=duracao_ms,
+                    enviado=enviado,
+                    recebido=str(erro),
+                    url=url,
+                )
+                raise
             cursor = fim_bloco + dt.timedelta(days=1)
     return [{"data": k, "valor": v} for k, v in sorted(tudo.items())]
 
