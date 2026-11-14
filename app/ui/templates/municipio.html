@@ -161,19 +161,19 @@
         <div class="diag-categoria-wrap">
           <span class="diag-categoria">{{ i.categoria }}</span>
           {% if i.criterio %}
-          <span class="diag-info-btn" tabindex="0" role="button" aria-label="Critérios de classificação">
+          <button type="button" class="diag-info-btn" aria-label="Critérios de classificação" aria-describedby="criterio-{{ loop.index }}">
             <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
               <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
               <text x="8" y="11.5" font-size="10" font-weight="700" text-anchor="middle" fill="currentColor" font-family="sans-serif">i</text>
             </svg>
-            <span class="diag-tooltip" style="display:none;">{{ i.criterio }}</span>
-          </span>
+          </button>
           {% endif %}
         </div>
         <span class="diag-tag {{ i.tag }}">
           {{ {"positiva": "Oportunidade", "cuidado": "Atenção", "risco": "Risco Crítico"}[i.tag] }}
         </span>
       </div>
+      <span class="diag-tooltip" id="criterio-{{ loop.index }}" role="tooltip">{{ i.criterio }}</span>
       <div class="diag-metrica">{{ i.metrica }}</div>
       <p class="diag-texto">{{ i.texto }}</p>
     </div>

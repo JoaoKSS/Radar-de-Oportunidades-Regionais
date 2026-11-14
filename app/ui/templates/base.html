@@ -10,7 +10,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/site.css?v=55">
+  <link rel="stylesheet" href="/static/css/site.css?v=68">
   <link rel="expect" href="#conteudo-principal" blocking="render">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23edf7f4'/><rect width='30' height='30' x='1' y='1' rx='7' fill='none' stroke='%23b6ded4' stroke-width='1'/><circle cx='16' cy='16' r='9' fill='none' stroke='%230d5f4c' stroke-width='2.2'/><line x1='16' y1='16' x2='23' y2='11' stroke='%230d5f4c' stroke-width='2.2' stroke-linecap='round'/><circle cx='16' cy='16' r='2.4' fill='%230d5f4c'/></svg>">
@@ -413,6 +413,61 @@
           alternar(false);
           btn.focus();
         }
+      });
+    })();
+
+    (function () {
+      const botoes = Array.from(document.querySelectorAll('.diag-info-btn'));
+      if (!botoes.length) return;
+      let ultimoTipoPonteiro = null;
+
+      document.addEventListener('pointerdown', function (evento) {
+        ultimoTipoPonteiro = evento.pointerType;
+      }, true);
+      document.addEventListener('keydown', function () {
+        ultimoTipoPonteiro = 'keyboard';
+      }, true);
+
+      function fechar(card) {
+        card.classList.remove('criterio-aberto');
+        const botao = card.querySelector('.diag-info-btn');
+        if (botao) botao.setAttribute('aria-expanded', 'false');
+      }
+
+      botoes.forEach(function (botao) {
+        botao.setAttribute('aria-expanded', 'false');
+        botao.addEventListener('click', function () {
+          // Mouse usa hover; a classe persistente só é necessária para toque/caneta.
+          if (ultimoTipoPonteiro !== 'touch' && ultimoTipoPonteiro !== 'pen') return;
+          const card = botao.closest('.card-diagnostico');
+          const vaiAbrir = !card.classList.contains('criterio-aberto');
+          botoes.forEach(function (outro) {
+            const outroCard = outro.closest('.card-diagnostico');
+            if (outroCard !== card) fechar(outroCard);
+          });
+          card.classList.toggle('criterio-aberto', vaiAbrir);
+          botao.setAttribute('aria-expanded', String(vaiAbrir));
+        });
+      });
+
+      document.addEventListener('click', function (evento) {
+        if (evento.target.closest('.diag-info-btn, .card-diagnostico')) return;
+        botoes.forEach(function (botao) { fechar(botao.closest('.card-diagnostico')); });
+      });
+
+      document.addEventListener('keydown', function (evento) {
+        if (evento.key !== 'Escape') return;
+        if (document.activeElement.matches('.diag-info-btn')) {
+          const focado = document.activeElement;
+          focado.blur();
+          fechar(focado.closest('.card-diagnostico'));
+        }
+        const aberto = botoes.find(function (botao) {
+          return botao.closest('.card-diagnostico').classList.contains('criterio-aberto');
+        });
+        if (!aberto) return;
+        fechar(aberto.closest('.card-diagnostico'));
+        aberto.focus();
       });
     })();
   </script>

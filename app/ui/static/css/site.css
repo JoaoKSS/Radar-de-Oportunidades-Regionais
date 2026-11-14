@@ -453,6 +453,7 @@ a:hover {
   .card-diagnostico {
     padding: 14px;
     border-radius: var(--raio-sm);
+    position: relative;
   }
   .diag-categoria {
     font-size: 10.5px;
@@ -468,20 +469,6 @@ a:hover {
     font-size: 12px;
     line-height: 1.45;
   }
-  .diag-tooltip {
-    left: 14px !important;
-    right: 14px !important;
-    top: calc(100% + 8px) !important;
-    width: auto !important;
-    max-width: none !important;
-    white-space: pre-line !important;
-    box-sizing: border-box !important;
-  }
-  .diag-tooltip::before {
-    left: 24px !important;
-    right: auto !important;
-  }
-
   .painel-chart {
     padding: 16px 14px;
   }
@@ -1300,7 +1287,7 @@ a:hover {
     position: relative;
   }
   .diag-categoria-wrap {
-    position: static !important;
+    position: static;
   }
 }
 
@@ -1347,6 +1334,9 @@ a:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 0;
+  background: transparent;
+  font: inherit;
   color: var(--tinta-sutil);
   cursor: pointer;
   position: relative;
@@ -1361,11 +1351,9 @@ a:hover {
   transform: scale(1.15);
 }
 .diag-tooltip {
-  display: none !important;
+  display: none;
   opacity: 0;
   position: absolute;
-  top: 100%;
-  left: 0;
   margin-top: 6px;
   background: #1e293b;
   color: #f8fafc;
@@ -1374,17 +1362,36 @@ a:hover {
   font-weight: 500;
   line-height: 1.45;
   white-space: pre-line;
+  overflow-wrap: break-word;
   padding: 8px 11px;
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   z-index: 9999;
-  width: max-content;
-  max-width: 280px;
+  width: min(22rem, calc(100vw - 2rem));
+  max-width: 100%;
+  left: 14px;
+  top: 42px;
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.15s ease;
   transform: translateY(-4px);
   text-transform: none;
   letter-spacing: normal;
+}
+@media (max-width: 640px) {
+  .diag-tooltip {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    overflow-wrap: anywhere;
+    padding: 10px 12px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    box-shadow: none;
+  }
+  .diag-tooltip::before {
+    display: none;
+  }
 }
 .diag-tooltip::before {
   content: "";
@@ -1395,9 +1402,16 @@ a:hover {
   border-style: solid;
   border-color: transparent transparent #1e293b transparent;
 }
-.diag-info-btn:hover .diag-tooltip,
-.diag-info-btn:focus-visible .diag-tooltip {
-  display: block !important;
+@media (hover: hover) and (pointer: fine) {
+  .card-diagnostico:has(.diag-info-btn:hover) > .diag-tooltip {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.card-diagnostico:has(.diag-info-btn:focus-visible) > .diag-tooltip,
+.card-diagnostico.criterio-aberto > .diag-tooltip {
+  display: block;
   opacity: 1;
   transform: translateY(0);
 }
