@@ -279,11 +279,47 @@
         return det;
       }
 
+      const CHAVE_STORAGE_MONITOR = 'radar_monitor_eventos_v1';
+
+      function lerCacheLocal() {
+        try {
+          const salvo = localStorage.getItem(CHAVE_STORAGE_MONITOR);
+          return salvo ? JSON.parse(salvo) : [];
+        } catch { return []; }
+      }
+
+      function salvarCacheLocal(novos) {
+        if (!novos || !novos.length) return;
+        try {
+          const anteriores = lerCacheLocal();
+          const mapa = new Map();
+          novos.forEach(function (e) {
+            mapa.set((e.protocolo || '') + '|' + (e.operacao || '') + '|' + (e.t || ''), e);
+          });
+          anteriores.forEach(function (e) {
+            const k = (e.protocolo || '') + '|' + (e.operacao || '') + '|' + (e.t || '');
+            if (!mapa.has(k)) mapa.set(k, e);
+          });
+          const listaMesclada = Array.from(mapa.values()).slice(0, 50);
+          localStorage.setItem(CHAVE_STORAGE_MONITOR, JSON.stringify(listaMesclada));
+        } catch {}
+      }
+
       async function atualizar() {
         lista.textContent = 'carregando…';
         try {
-          const r = await fetch('/api/monitor');
-          const eventos = (await r.json()).eventos || [];
+          let eventos = [];
+          try {
+            const r = await fetch('/api/monitor');
+            eventos = (await r.json()).eventos || [];
+          } catch {}
+
+          if (eventos.length) {
+            salvarCacheLocal(eventos);
+          } else {
+            eventos = lerCacheLocal();
+          }
+
           lista.innerHTML = '';
           const ctx = obterContextoAtivo();
           const visiveis = eventos.filter(function (ev) {
