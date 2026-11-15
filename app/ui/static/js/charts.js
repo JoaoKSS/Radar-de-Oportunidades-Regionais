@@ -477,18 +477,78 @@
 
   var G = window.__COMPARAR__;
   if (G && G.labels && G.labels.length) {
-    render('chart-pc', grade({
+    function formatarRotuloCidade(val) {
+      if (!val) return '';
+      var partes = String(val).split(' · ');
+      var cidade = partes[0].trim();
+      var uf = partes[1] ? partes[1].trim() : '';
+      var w = window.innerWidth;
+
+      // 1. Em tela grande de desktop (>= 1200px): Nome completo em uma linha só!
+      // Exemplo: "Montes Claros · MG", "Belo Horizonte · MG"
+      if (w >= 1200) {
+        return uf ? (cidade + ' · ' + uf) : cidade;
+      }
+
+      // 2. Em telas médias / tablet (entre 641px e 1199px):
+      // Nome completo na primeira linha e estado embaixo:
+      // Exemplo:
+      // Montes Claros
+      // (MG)
+      if (w > 640) {
+        return uf ? (cidade + '\n(' + uf + ')') : cidade;
+      }
+
+      // 3. Em telas pequenas / mobile (<= 640px):
+      // Vai empilhando as palavras embaixo para caber com respiro:
+      // Exemplo:
+      // Montes
+      // Claros
+      // (MG)
+      if (G.labels.length > 2) {
+        var palavras = cidade.split(' ');
+        var cidadeFmt = (palavras.length > 1 && cidade.length > 8) ? palavras.join('\n') : cidade;
+        return uf ? (cidadeFmt + '\n(' + uf + ')') : cidadeFmt;
+      }
+      return uf ? (cidade + '\n(' + uf + ')') : cidade;
+    }
+
+    function obterConfigEixoX() {
+      var w = window.innerWidth;
+      var ehMobile = w <= 640;
+      var mtCidades = G.labels.length > 2;
+
+      var margemFundo = 32;
+      if (w >= 1200) {
+        margemFundo = 34;
+      } else if (w > 640) {
+        margemFundo = 46;
+      } else {
+        margemFundo = mtCidades ? 54 : 42;
+      }
+
+      return {
+        axisLabel: {
+          color: TINTA_FRACA,
+          fontSize: ehMobile && mtCidades ? 9.5 : (w >= 1200 ? 11.5 : 11),
+          fontWeight: 600,
+          interval: 0,
+          lineHeight: ehMobile && mtCidades ? 12.5 : 14,
+          width: null,
+          overflow: 'none',
+          formatter: formatarRotuloCidade
+        },
+        gridBottom: margemFundo,
+        barWidth: ehMobile && mtCidades ? '30%' : '38%'
+      };
+    }
+
+    var cfgInicial = obterConfigEixoX();
+
+    var chartPc = render('chart-pc', grade({
       xAxis: { type: 'category', data: G.labels,
                axisLine: { lineStyle: { color: BORDA } },
-               axisLabel: {
-                 color: TINTA_FRACA,
-                 fontSize: 11,
-                 fontWeight: 600,
-                 interval: 0,
-                 width: 90,
-                 overflow: 'truncate',
-                 ellipsis: '…'
-               },
+               axisLabel: cfgInicial.axisLabel,
                axisTick: { show: false } },
       yAxis: { type: 'value',
                splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -498,7 +558,7 @@
                  formatter: function (ps) { return '<strong>' + ps[0].axisValue + '</strong><br/>PIB per capita: <strong>R$ ' +
                    Number(ps[0].value).toLocaleString('pt-BR') + ' mil/hab</strong>'; } },
       series: [{
-        type: 'bar', data: G.pib_pc, barWidth: '38%',
+        type: 'bar', data: G.pib_pc, barWidth: cfgInicial.barWidth,
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#0d5f4c' },
@@ -509,20 +569,12 @@
           shadowBlur: 6,
         }
       }],
-    }, { bottom: 32 }));
+    }, { bottom: cfgInicial.gridBottom, left: window.innerWidth <= 640 ? 6 : 12, right: window.innerWidth <= 640 ? 8 : 18 }));
 
-    render('chart-cresc', grade({
+    var chartCresc = render('chart-cresc', grade({
       xAxis: { type: 'category', data: G.labels,
                axisLine: { lineStyle: { color: BORDA } },
-               axisLabel: {
-                 color: TINTA_FRACA,
-                 fontSize: 11,
-                 fontWeight: 600,
-                 interval: 0,
-                 width: 90,
-                 overflow: 'truncate',
-                 ellipsis: '…'
-               },
+               axisLabel: cfgInicial.axisLabel,
                axisTick: { show: false } },
       yAxis: { type: 'value', axisLabel: { color: TINTA_FRACA, formatter: '{value}%', fontSize: 11.5 },
                splitLine: { lineStyle: { color: '#f1f5f9' } } },
@@ -541,19 +593,22 @@
             }
           };
         }),
-        barWidth: '38%'
+        barWidth: cfgInicial.barWidth
       }],
-    }, { bottom: 32 }));
+    }, { bottom: cfgInicial.gridBottom, left: window.innerWidth <= 640 ? 6 : 12, right: window.innerWidth <= 640 ? 8 : 18 }));
 
+    var chartVab = null;
     if (G.vab && G.vab.length) {
-      render('chart-vab-comp', grade({
+      var ehMobVab = window.innerWidth <= 640;
+      chartVab = render('chart-vab-comp', grade({
         legend: {
           top: 0,
-          right: 0,
+          right: ehMobVab ? 'auto' : 0,
+          left: ehMobVab ? 'center' : 'auto',
           icon: 'circle',
           itemWidth: 8,
-          itemGap: 14,
-          textStyle: { color: TINTA_FRACA, fontSize: 11.5, fontWeight: 500 }
+          itemGap: ehMobVab ? 10 : 14,
+          textStyle: { color: TINTA_FRACA, fontSize: ehMobVab ? 10.5 : 11.5, fontWeight: 500 }
         },
         tooltip: {
           trigger: 'axis',
@@ -570,7 +625,7 @@
           type: 'category',
           data: G.labels,
           axisLine: { lineStyle: { color: BORDA } },
-          axisLabel: { color: TINTA_FRACA, fontSize: 12, fontWeight: 600 },
+          axisLabel: cfgInicial.axisLabel,
           axisTick: { show: false }
         },
         yAxis: {
@@ -601,8 +656,40 @@
             itemStyle: { color: '#10b981' }
           }
         ]
-      }, { top: 38, bottom: 12 }));
+      }, { top: ehMobVab ? 50 : 38, bottom: cfgInicial.gridBottom }));
     }
+
+    // Ao redimensionar a tela (e.g. inspecionar elemento mudando de desktop para mobile), atualiza as opções responsivamente
+    window.addEventListener('resize', function () {
+      var cfgAtual = obterConfigEixoX();
+      var ehMob = window.innerWidth <= 640;
+      if (chartPc) {
+        chartPc.setOption({
+          xAxis: { axisLabel: cfgAtual.axisLabel },
+          grid: { bottom: cfgAtual.gridBottom, left: ehMob ? 6 : 12, right: ehMob ? 8 : 18 },
+          series: [{ barWidth: cfgAtual.barWidth }]
+        });
+      }
+      if (chartCresc) {
+        chartCresc.setOption({
+          xAxis: { axisLabel: cfgAtual.axisLabel },
+          grid: { bottom: cfgAtual.gridBottom, left: ehMob ? 6 : 12, right: ehMob ? 8 : 18 },
+          series: [{ barWidth: cfgAtual.barWidth }]
+        });
+      }
+      if (chartVab) {
+        chartVab.setOption({
+          legend: {
+            right: ehMob ? 'auto' : 0,
+            left: ehMob ? 'center' : 'auto',
+            itemGap: ehMob ? 10 : 14,
+            textStyle: { fontSize: ehMob ? 10.5 : 11.5 }
+          },
+          xAxis: { axisLabel: cfgAtual.axisLabel },
+          grid: { top: ehMob ? 50 : 38, bottom: cfgAtual.gridBottom }
+        });
+      }
+    });
   }
 
   var entrada = document.getElementById('busca-entrada');
