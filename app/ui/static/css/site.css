@@ -2129,14 +2129,14 @@ a:hover {
   line-height: 1.2;
 }
 .proto-mini.rest {
-  background: #e8f5e9;
-  color: #1b5e20;
-  border: 1px solid #c8e6c9;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
 }
 .proto-mini.soap {
-  background: #ede7f6;
-  color: #4a148c;
-  border: 1px solid #d1c4e9;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
 }
 
 .link-inspecionar {
